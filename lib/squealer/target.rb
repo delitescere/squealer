@@ -1,4 +1,12 @@
+require 'delegate'
+require 'singleton'
+
 class Target
+
+  def self.current
+    Queue.instance.current
+  end
+
   def initialize(database_connection, table_name, row_id, &block)
     throw "Block must be given to target (otherwise, there's no work to do)" unless block_given?
 
@@ -15,22 +23,38 @@ class Target
     @sql
   end
 
+  def assign(column_name, &block)
+    @column_names << column_name
+    @column_values << block.call
+  end
+
+
+  private
+
   def target(&block)
-    yield(self)
+    Queue.instance.push(self)
+
+    yield self
 
     @sql = "INSERT #{@table_name}"
     @sql << " (#{pk_name}#{column_names}) VALUES (#{@row_id}#{column_values})"
     @sql << " ON DUPLICATE KEY UPDATE #{columns}"
 
-    # execute @sql
+    execute_sql(@sql)
+
+    Queue.instance.pop
   end
 
-   def assign(column_name, &block)
-     @column_names << column_name
-     @column_values << block.call
-   end
+  def self.targets
+    @@targets
+  end
 
-  private
+  def targets
+    @@targets
+  end
+
+  def execute_sql(sql)
+  end
 
   def pk_name
     'id'
@@ -54,4 +78,20 @@ class Target
     @column_names.each_with_index {|k,i| result << "#{k}='#{@column_values[i]}'," }
     result.chop
   end
+
+  class Queue < DelegateClass(Array)
+    include Singleton
+
+    def current
+      last
+    end
+
+    protected
+
+    def initialize
+      super([])
+    end
+
+  end
+
 end
