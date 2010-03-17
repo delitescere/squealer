@@ -37,6 +37,7 @@ describe Object do
         end
       end
     end
+
   end
 
   describe "#import" do
