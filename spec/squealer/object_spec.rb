@@ -1,5 +1,14 @@
 require 'spec_helper'
 
+describe NilClass do
+
+  describe "#each" do
+    it "returns an empty array" do
+      nil.each.should == []
+    end
+  end
+end
+
 describe Object do
 
   describe "#target" do
@@ -14,7 +23,7 @@ describe Object do
     end
 
     it "uses the export database connection" do
-      Database.instance.should_receive(:export)
+      mock_mysql
       target(:test_table, 1) { nil }
     end
 
@@ -27,6 +36,7 @@ describe Object do
     end
 
     it "invokes assign on the target it is immediately nested within" do
+      mock_mysql
       target(:test_table, 1) do |target1|
         target1.should_receive(:assign)
         assign(:colA) { 42 }
@@ -64,6 +74,12 @@ describe Object do
       export('test_export')
     end
 
+  end
+
+  def mock_mysql
+    my = mock(Mysql)
+    Database.instance.should_receive(:export).at_least(:once).and_return(my)
+    my.should_receive(:query).at_least(:once)
   end
 
 end

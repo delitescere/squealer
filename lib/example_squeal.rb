@@ -1,31 +1,33 @@
 require 'squealer'
 
-import('pharmmd_production')
+import('pharmmd_development')
 export('pharmmd_reporting_export')
 
-Squealer.import("patients").find({}).each do |patient|
-  target(:patient, patient.id) do  # insert or update on patient where id is primary key column name
-      assign(:name) { patient[first_name] + " " + patient[last_name].upcase }
-      assign(:dob) { patient[date_of_birth] }
-      assign(:latest_drug) { patient.medications.last.name } # dubious
+Database.instance.import.collection("patients").find({}).each do |patient|
+  target(:patient, patient._id) do  # insert or update on patient where id is primary key column name
+    assign(:name) { patient.first_name + " " + patient.last_name.upcase }
+    assign(:dob) { patient.dob }
 
-      patient.medications.each do |med|
-        target(:medication, med.id) do
-          assign(:patient_id) { patient.id }
-          assign(:name) { med.name }
-        end
-
-        med.prescriptions.each do |rx|
-          target(:prescription, rx.id) do
-            assign(:patient_id) { patient.id }
-            assign(:medication_id) { med.id }
-            assign(:dispense_date) { rx.dispense_date }
-          end
-        end
+    patient.medications.each do |med|
+      target(:medication, med._id) do
+        assign(:patient_id) { patient._id }
+        assign(:name) { med.name }
       end
-    end
+
+      med.prescriptions.each do |rx|
+        target(:prescription, rx._id) do
+          assign(:patient_id) { patient._id }
+          assign(:medication_id) { med._id }
+          assign(:dispense_date) { rx.dispense_date }
+        end
+      end #med.prescriptions
+    end #patient.medications
   end
-end
+end #collection("patients")
+
+
+
+
 
 Organization.collection.find({}).each do |organization|
   if organization.disabled

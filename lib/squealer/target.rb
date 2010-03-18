@@ -37,7 +37,7 @@ class Target
     yield self
 
     @sql = "INSERT #{@table_name}"
-    @sql << " (#{pk_name}#{column_names}) VALUES (#{@row_id}#{column_values})"
+    @sql << " (#{pk_name}#{column_names}) VALUES ('#{@row_id}'#{column_values})"
     @sql << " ON DUPLICATE KEY UPDATE #{columns}"
 
     execute_sql(@sql)
@@ -54,6 +54,7 @@ class Target
   end
 
   def execute_sql(sql)
+    Database.instance.export.query(sql)
   end
 
   def pk_name

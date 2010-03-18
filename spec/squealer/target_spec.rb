@@ -1,12 +1,20 @@
 require 'spec_helper'
 
 describe Target do
+  let(:export_dbc) { mock(Mysql) }
+  let(:table_name) { :test_table }
+  let(:row_id) { 0 }
+
+  before(:each) do
+    Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
+    export_dbc.should_receive(:query).at_least(:once)
+  end
+
+  it "sends the sql to the export database" do
+    Target.new(export_dbc, table_name, row_id) { nil }
+  end
 
   describe "#target" do
-
-    let(:export_dbc) { 'test_export' }
-    let(:table_name) { :test_table }
-    let(:row_id) { 0 }
 
     it "pushes itself onto the targets stack when starting" do
       @target1 = nil
@@ -43,12 +51,10 @@ describe Target do
       end
 
       it "includes the primary key value in the INSERT" do
-        target.sql.should =~ / VALUES \(#{row_id}\) /
+        target.sql.should =~ / VALUES \('#{row_id}'\) /
       end
 
     end
-
-    it "sends the sql to the export database"
 
     context "with inner block" do
 
@@ -80,7 +86,7 @@ describe Target do
         end
 
         it "includes the column value in the INSERT" do
-          target.sql.should =~ /VALUES \(#{row_id},'#{value_1}'\)/
+          target.sql.should =~ /VALUES \('#{row_id}','#{value_1}'\)/
         end
 
         it "includes the column name and value in the UPDATE" do
@@ -105,7 +111,7 @@ describe Target do
         end
 
         it "includes the column values in the INSERT" do
-          target.sql.should =~ /VALUES \(#{row_id},'#{value_1}','#{value_2}'\)/
+          target.sql.should =~ /VALUES \('#{row_id}','#{value_1}','#{value_2}'\)/
         end
 
         it "includes the column names and values in the UPDATE" do

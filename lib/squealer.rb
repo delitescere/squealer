@@ -1,3 +1,5 @@
+require 'squealer/hash'
+require 'squealer/time'
 require 'squealer/target'
 require 'squealer/database'
 require 'squealer/object'

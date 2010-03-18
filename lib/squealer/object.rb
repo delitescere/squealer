@@ -17,3 +17,9 @@ class Object
   end
 
 end
+
+class NilClass
+  def each
+    []
+  end
+end
