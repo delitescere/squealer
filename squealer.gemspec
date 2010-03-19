@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan"]
@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
     ".watchr",
      "README.md",
      "Rakefile",
+     "VERSION",
      "lib/example_squeal.rb",
      "lib/squealer.rb",
      "lib/squealer/database.rb",
@@ -32,7 +33,8 @@ Gem::Specification.new do |s|
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
      "spec/squealer/target_spec.rb",
-     "spec/squealer/time_spec.rb"
+     "spec/squealer/time_spec.rb",
+     "squealer.gemspec"
   ]
   s.homepage = %q{http://github.com/deltiscere/squealer/}
   s.rdoc_options = ["--charset=UTF-8"]
