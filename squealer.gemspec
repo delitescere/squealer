@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
      "lib/squealer/object.rb",
      "lib/squealer/target.rb",
      "lib/squealer/time.rb",
+     "lib/tasks/jeweler.rake",
      "spec/spec.opts",
      "spec/spec_helper.rb",
      "spec/squealer/database_spec.rb",
