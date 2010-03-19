@@ -1,14 +1,12 @@
 # Add your own tasks in files placed in lib/tasks ending in .rake,
 # for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
 
-require(File.join(File.dirname(__FILE__), 'config', 'boot'))
-
 require 'rake'
-require 'rake/testtask'
+require 'spec/rake/spectask'
 require 'rake/rdoctask'
 
-Rake::Task[:default].clear
 task :default => [:spec]
+Rake::Task[:default].clear
 
 begin
   require 'jeweler'
@@ -19,8 +17,8 @@ begin
     gemspec.email = "joshua.graham@grahamis.com"
     gemspec.homepage = "http://github.com/deltiscere/squealer/"
     gemspec.authors = ["Josh Graham", "Durran Jordan"]
-    gem.add_dependency('mysql', '>= 2.8.1')
-    gem.add_dependency('mongo', '>= 0.18.3')
+    gemspec.add_dependency('mysql', '>= 2.8.1')
+    gemspec.add_dependency('mongo', '>= 0.18.3')
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: gem install jeweler"
