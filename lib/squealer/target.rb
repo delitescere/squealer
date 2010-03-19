@@ -37,8 +37,8 @@ class Target
     yield self
 
     @sql = "INSERT #{@table_name}"
-    @sql << " (#{pk_name}#{column_names}) VALUES ('#{@row_id}'#{column_values})"
-    @sql << " ON DUPLICATE KEY UPDATE #{columns}"
+    @sql << " (#{pk_name}#{column_names}) VALUES (?#{column_value_markers})"
+    @sql << " ON DUPLICATE KEY UPDATE #{column_markers}"
 
     execute_sql(@sql)
 
@@ -54,7 +54,9 @@ class Target
   end
 
   def execute_sql(sql)
-    Database.instance.export.query(sql)
+    statement = Database.instance.export.prepare(sql)
+    values = [*column_values] + [*column_values]  #array expando
+    statement.send(:execute, @row_id, *values) #expand values into distinct arguments
   end
 
   def pk_name
@@ -67,16 +69,20 @@ class Target
   end
 
   def column_values
-    return if @column_names.size == 0
-    result = ","
-    @column_values.each {|v| result << "'#{v}'," }
-    result.chop
+    @column_values
   end
 
-  def columns
+  def column_value_markers
     return if @column_names.size == 0
     result = ""
-    @column_names.each_with_index {|k,i| result << "#{k}='#{@column_values[i]}'," }
+    @column_names.size.times { result << ',?'}
+    result
+  end
+
+  def column_markers
+    return if @column_names.size == 0
+    result = ""
+    @column_names.each {|k| result << "#{k}=?," }
     result.chop
   end
 

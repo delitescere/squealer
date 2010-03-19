@@ -7,7 +7,9 @@ describe Target do
 
   before(:each) do
     Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
-    export_dbc.should_receive(:query).at_least(:once)
+    st = mock(Mysql::Stmt)
+    export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
+    st.should_receive(:execute).at_least(:once)
   end
 
   it "sends the sql to the export database" do
@@ -51,7 +53,8 @@ describe Target do
       end
 
       it "includes the primary key value in the INSERT" do
-        target.sql.should =~ / VALUES \('#{row_id}'\) /
+        # target.sql.should =~ / VALUES \('#{row_id}'\) /
+        target.sql.should =~ / VALUES \(\?\) /
       end
 
     end
@@ -71,7 +74,8 @@ describe Target do
       it "yields inner blocks first and they can assign to this target" do
         target = Target.new(export_dbc, table_name, row_id) { Target.current.assign(:colA) { 42 } }
         target.sql.should =~ /colA/
-        target.sql.should =~ /42/
+        # target.sql.should =~ /42/
+        target.sql.should =~ /\?/
       end
 
       context "with 2 columns" do
@@ -86,11 +90,13 @@ describe Target do
         end
 
         it "includes the column value in the INSERT" do
-          target.sql.should =~ /VALUES \('#{row_id}','#{value_1}'\)/
+          # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}'\)/
+          target.sql.should =~ /VALUES \(\?,\?\)/
         end
 
         it "includes the column name and value in the UPDATE" do
-          target.sql.should =~ /UPDATE colA='#{value_1}'/
+          # target.sql.should =~ /UPDATE colA='#{value_1}'/
+          target.sql.should =~ /UPDATE colA=\?/
         end
 
       end
@@ -111,11 +117,13 @@ describe Target do
         end
 
         it "includes the column values in the INSERT" do
-          target.sql.should =~ /VALUES \('#{row_id}','#{value_1}','#{value_2}'\)/
+          # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}','#{value_2}'\)/
+          target.sql.should =~ /VALUES \(\?,\?,\?\)/
         end
 
         it "includes the column names and values in the UPDATE" do
-          target.sql.should =~ /UPDATE colA='#{value_1}',colB='#{value_2}'/
+          # target.sql.should =~ /UPDATE colA='#{value_1}',colB='#{value_2}'/
+          target.sql.should =~ /UPDATE colA=\?,colB=\?/
         end
 
       end

@@ -78,8 +78,10 @@ describe Object do
 
   def mock_mysql
     my = mock(Mysql)
+    st = mock(Mysql::Stmt)
     Database.instance.should_receive(:export).at_least(:once).and_return(my)
-    my.should_receive(:query).at_least(:once)
+    my.should_receive(:prepare).at_least(:once).and_return(st)
+    st.should_receive(:execute).at_least(:once)
   end
 
 end
