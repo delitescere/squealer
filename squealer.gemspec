@@ -36,7 +36,7 @@ Gem::Specification.new do |s|
      "spec/squealer/time_spec.rb",
      "squealer.gemspec"
   ]
-  s.homepage = %q{http://github.com/deltiscere/squealer/}
+  s.homepage = %q{http://github.com/delitescere/squealer/}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
