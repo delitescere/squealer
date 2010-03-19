@@ -1,19 +1,19 @@
 require 'spec_helper'
 
-describe Target do
+describe Squealer::Target do
   let(:export_dbc) { mock(Mysql) }
   let(:table_name) { :test_table }
   let(:row_id) { 0 }
 
   before(:each) do
-    Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
+    Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
     st = mock(Mysql::Stmt)
     export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
     st.should_receive(:execute).at_least(:once)
   end
 
   it "sends the sql to the export database" do
-    Target.new(export_dbc, table_name, row_id) { nil }
+    Squealer::Target.new(export_dbc, table_name, row_id) { nil }
   end
 
   describe "#target" do
@@ -21,10 +21,10 @@ describe Target do
     it "pushes itself onto the targets stack when starting" do
       @target1 = nil
       @target2 = nil
-      target1 = Target.new(export_dbc, table_name, row_id) do
-        @target1 = Target.current
-        Target.new(export_dbc, "#{table_name}_2", row_id) do
-          @target2 = Target.current
+      target1 = Squealer::Target.new(export_dbc, table_name, row_id) do
+        @target1 = Squealer::Target.current
+        Squealer::Target.new(export_dbc, "#{table_name}_2", row_id) do
+          @target2 = Squealer::Target.current
           @target2.should_not == @target1
         end
       end
@@ -32,13 +32,13 @@ describe Target do
     end
 
     it "pops itself off the targets stack when finished" do
-      Target.new(export_dbc, table_name, row_id) { nil }
-      Target.current.should be_nil
+      Squealer::Target.new(export_dbc, table_name, row_id) { nil }
+      Squealer::Target.current.should be_nil
     end
 
     context "generates SQL command strings" do
 
-      let(:target) { Target.new(export_dbc, table_name, row_id) { nil } }
+      let(:target) { Squealer::Target.new(export_dbc, table_name, row_id) { nil } }
 
       it "targets the table" do
         target.sql.should =~ /^INSERT #{table_name} /
@@ -63,16 +63,16 @@ describe Target do
 
       it "yields inner blocks" do
         block_done = false
-        target = Target.new(export_dbc, table_name, row_id) { block_done = true }
+        target = Squealer::Target.new(export_dbc, table_name, row_id) { block_done = true }
         block_done.should be_true
       end
 
       it "yields inner blocks first" do
-        Target.new(export_dbc, table_name, row_id) { Target.current.sql.should be_empty }
+        Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.sql.should be_empty }
       end
 
       it "yields inner blocks first and they can assign to this target" do
-        target = Target.new(export_dbc, table_name, row_id) { Target.current.assign(:colA) { 42 } }
+        target = Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.assign(:colA) { 42 } }
         target.sql.should =~ /colA/
         # target.sql.should =~ /42/
         target.sql.should =~ /\?/
@@ -82,7 +82,7 @@ describe Target do
 
         let(:value_1) { 42 }
         let(:target) do
-          Target.new(export_dbc, table_name, row_id) { Target.current.assign(:colA) { value_1 } }
+          Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.assign(:colA) { value_1 } }
         end
 
         it "includes the column name in the INSERT" do
@@ -106,9 +106,9 @@ describe Target do
         let(:value_1) { 42 }
         let(:value_2) { 'foobar' }
         let(:target) do
-          Target.new(export_dbc, table_name, row_id) do
-            Target.current.assign(:colA) { value_1 }
-            Target.current.assign(:colB) { value_2 }
+          Squealer::Target.new(export_dbc, table_name, row_id) do
+            Squealer::Target.current.assign(:colA) { value_1 }
+            Squealer::Target.current.assign(:colB) { value_2 }
           end
         end
 

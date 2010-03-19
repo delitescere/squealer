@@ -2,7 +2,7 @@ require 'mysql'
 require 'mongo'
 require 'spec_helper'
 
-describe Database do
+describe Squealer::Database do
 
   before(:all) do
     @db_name = "test_export_#{object_id}"
@@ -14,17 +14,17 @@ describe Database do
   end
 
   it "is a singleton" do
-    Database.respond_to?(:instance).should be_true
+    Squealer::Database.respond_to?(:instance).should be_true
   end
 
   it "takes an import database" do
-    Database.instance.import = @db_name
-    Database.instance.import.should be_a_kind_of(Mongo::DB)
+    Squealer::Database.instance.import = @db_name
+    Squealer::Database.instance.import.should be_a_kind_of(Mongo::DB)
   end
 
   it "takes an export database" do
-    Database.instance.export = @db_name
-    Database.instance.export.should be_a_kind_of(Mysql)
+    Squealer::Database.instance.export = @db_name
+    Squealer::Database.instance.export.should be_a_kind_of(Mysql)
   end
 
   private

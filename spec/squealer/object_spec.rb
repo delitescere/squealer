@@ -17,8 +17,8 @@ describe Object do
       Object.new.respond_to?(:target).should be_true
     end
 
-    it "invokes Target.new" do
-      Target.should_receive(:new)
+    it "invokes Squealer::Target.new" do
+      Squealer::Target.should_receive(:new)
       target(:test_table, 1) { nil }
     end
 
@@ -57,7 +57,7 @@ describe Object do
     end
 
     it "invokes Database.import=" do
-      Database.instance.should_receive(:import=)
+      Squealer::Database.instance.should_receive(:import=)
       import('test_import')
     end
 
@@ -70,7 +70,7 @@ describe Object do
     end
 
     it "invokes Database.export=" do
-      Database.instance.should_receive(:export=)
+      Squealer::Database.instance.should_receive(:export=)
       export('test_export')
     end
 
@@ -79,7 +79,7 @@ describe Object do
   def mock_mysql
     my = mock(Mysql)
     st = mock(Mysql::Stmt)
-    Database.instance.should_receive(:export).at_least(:once).and_return(my)
+    Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(my)
     my.should_receive(:prepare).at_least(:once).and_return(st)
     st.should_receive(:execute).at_least(:once)
   end
