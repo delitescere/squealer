@@ -4,7 +4,7 @@ describe NilClass do
 
   describe "#each" do
     it "returns an empty array" do
-      nil.each.should == []
+      nil.each.should == [] # because mongo is schema-less
     end
   end
 end
@@ -56,9 +56,22 @@ describe Object do
       Object.new.respond_to?(:import).should be_true
     end
 
-    it "invokes Database.import=" do
-      Squealer::Database.instance.should_receive(:import=)
-      import('test_import')
+    context "with a single argument" do
+
+      it "invokes Database.import_from" do
+        Squealer::Database.instance.should_receive(:import_from)
+        import('test_import')
+      end
+
+    end
+
+    context "with no argment" do
+
+      it "invokes Database.import" do
+        Squealer::Database.instance.should_receive(:import)
+        import
+      end
+
     end
 
   end
@@ -69,9 +82,22 @@ describe Object do
       Object.new.respond_to?(:export).should be_true
     end
 
-    it "invokes Database.export=" do
-      Squealer::Database.instance.should_receive(:export=)
-      export('test_export')
+    context "with a single argument" do
+
+      it "invokes Database.export_to" do
+        Squealer::Database.instance.should_receive(:export_to)
+        export('test_export')
+      end
+
+    end
+
+    context "with no argment" do
+
+      it "invokes Database.export" do
+        Squealer::Database.instance.should_receive(:export)
+        export
+      end
+
     end
 
   end

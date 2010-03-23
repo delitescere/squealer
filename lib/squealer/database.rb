@@ -6,14 +6,12 @@ module Squealer
   class Database
     include Singleton
 
-    def import=(name)
-      config = lookup_in_database_mongo_yml(name)
-      @import_dbc = Mongo::Connection.new(config[:host], config[:port], :slave_ok => true).db(name)
+    def import_from(host, port, name)
+      @import_dbc = Mongo::Connection.new(host, port, :slave_ok => true).db(name)
     end
 
-    def export=(name)
-      config = lookup_in_database_yml(name)
-      @export_dbc = Mysql.connect(config[:host], config[:username], config[:password], name)
+    def export_to(host, username, password, name)
+      @export_dbc = Mysql.connect(host, username, password, name)
     end
 
     def import
@@ -22,27 +20,6 @@ module Squealer
 
     def export
       @export_dbc
-    end
-
-    private
-
-    def lookup_in_database_yml(name)
-      config = {}
-
-      config[:host] = 'localhost'
-      config[:username] = 'root'
-      config[:password] = ''
-
-      config
-    end
-
-    def lookup_in_database_mongo_yml(name)
-      config = {}
-
-      config[:host] = 'localhost'
-      config[:port] = 27017
-
-      config
     end
 
   end

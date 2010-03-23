@@ -18,12 +18,12 @@ describe Squealer::Database do
   end
 
   it "takes an import database" do
-    Squealer::Database.instance.import = @db_name
+    Squealer::Database.instance.import_from('localhost', 27017, @db_name)
     Squealer::Database.instance.import.should be_a_kind_of(Mongo::DB)
   end
 
   it "takes an export database" do
-    Squealer::Database.instance.export = @db_name
+    Squealer::Database.instance.export_to('localhost', 'root', '', @db_name)
     Squealer::Database.instance.export.should be_a_kind_of(Mysql)
   end
 

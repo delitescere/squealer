@@ -8,12 +8,20 @@ class Object
     Squealer::Target.current.assign(column_name, &block)
   end
 
-  def import(database)
-    Squealer::Database.instance.import = database
+  def import(*args)
+    if args.length > 0
+      Squealer::Database.instance.import_from(*args)
+    else
+      Squealer::Database.instance.import
+    end
   end
 
-  def export(database)
-    Squealer::Database.instance.export = database
+  def export(*args)
+    if args.length > 0
+      Squealer::Database.instance.export_to(*args)
+    else
+      Squealer::Database.instance.export
+    end
   end
 
 end
