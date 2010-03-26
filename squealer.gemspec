@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan"]
-  s.date = %q{2010-03-23}
+  s.date = %q{2010-03-26}
   s.description = %q{Exports mongodb to mysql. More later.}
   s.email = %q{joshua.graham@grahamis.com}
   s.extra_rdoc_files = [
