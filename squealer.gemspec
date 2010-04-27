@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "1.0.1"
+  s.version = "1.0.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan"]
-  s.date = %q{2010-03-26}
+  s.date = %q{2010-04-27}
   s.description = %q{Exports mongodb to mysql. More later.}
   s.email = %q{joshua.graham@grahamis.com}
   s.extra_rdoc_files = [
@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/example_squeal.rb",
      "lib/squealer.rb",
+     "lib/squealer/boolean.rb",
      "lib/squealer/database.rb",
      "lib/squealer/hash.rb",
      "lib/squealer/object.rb",
@@ -31,6 +32,7 @@ Gem::Specification.new do |s|
      "lib/tasks/jeweler.rake",
      "spec/spec.opts",
      "spec/spec_helper.rb",
+     "spec/squealer/boolean_spec.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
@@ -45,6 +47,7 @@ Gem::Specification.new do |s|
   s.summary = %q{Document-oriented to Relational database exporter}
   s.test_files = [
     "spec/spec_helper.rb",
+     "spec/squealer/boolean_spec.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
