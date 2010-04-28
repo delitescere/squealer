@@ -22,7 +22,7 @@ For now, this is specifically for _MongoDB_ exporting to _mySQL_ with the assump
 ## Notes
 The target SQL database must have no foreign keys (because it can't rely on the primary key values and referential integrity is the responsibility of the source data store or the application that uses it).
 
-The target SQL database must use a primary key of char(16) with value of the MongoDB id.
+The target SQL database must use a primary key of char(24) with value of the MongoDB id.
 
 It is assumed no indexes are present in the target database table (performance drag). You may want to create indexes for pulling data out of the database Squealer exports to. You should drop them again when you've done the pull.
 
