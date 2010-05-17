@@ -1,5 +1,8 @@
 # Squealer
 
+## Usage
+See lib/example_squeal.rb for the example.
+
 ## Warning
 Squealer is for standalone operation. Do not use it from within your application. To make the DSL easy to use, we alter `Hash`, `NilClass`, `Object`, and `Time`.
 
@@ -18,6 +21,9 @@ Squealer doesn't use your application classes. It doesn't use your ActiveRecord 
 
 ## Databases supported
 For now, this is specifically for _MongoDB_ exporting to _mySQL_ with the assumption that the data will be heavily denormalized - particularly that the hierarchy keys for embedded documents are flattened. This means that a document from `office.room.box` will be exported to a record containing the `id` for `office`, the `id` for `room` and the `id` for `box`.
+
+## Deprecation Warning
+Since version 1.1, the primary key value is infered from the source document `_id` field based on the `target()` `table_name` argument matching the name of a variable holding the source document, `row_id` is no longer a parameter on `target()`. It will be invalid in version 1.3 and above.
 
 ## Notes
 The target SQL database must have no foreign keys (because it can't rely on the primary key values and referential integrity is the responsibility of the source data store or the application that uses it).
