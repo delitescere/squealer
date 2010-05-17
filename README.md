@@ -9,6 +9,12 @@ To run standalone, simply make your data squeal thusly:
 
 where the squeal script includes a `require 'squealer'`.
 
+## Release Notes
+### v1.2
+* `Object#target` verifies there is a variable in scope with the same name as the `table_name` being targetted, it must be a `Hash` and must have an `_id` key
+* Block to `Object#assign` not required, infers value from source scope
+* A block returning `nil` now uses `nil` as the value to `Object#assign`, rather than inferring value from source scope
+
 ## Warning
 Squealer is for _standalone_ operation. DO NOT use it directly from within your Ruby application. To make the DSL easy to use, we alter some core types:
 
