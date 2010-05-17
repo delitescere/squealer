@@ -1,6 +1,6 @@
 class Object
 
-  def target(table_name, row_id, &block)
+  def target(table_name, row_id=nil, &block)
     Squealer::Target.new(Squealer::Database.instance.export, table_name, row_id, &block)
   end
 

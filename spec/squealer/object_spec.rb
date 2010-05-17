@@ -10,6 +10,7 @@ describe NilClass do
 end
 
 describe Object do
+  let(:test_table) { {'_id' => 1} }
 
   describe "#target" do
 
@@ -19,12 +20,12 @@ describe Object do
 
     it "invokes Squealer::Target.new" do
       Squealer::Target.should_receive(:new)
-      target(:test_table, 1) { nil }
+      target(:test_table) { nil }
     end
 
     it "uses the export database connection" do
       mock_mysql
-      target(:test_table, 1) { nil }
+      target(:test_table) { nil }
     end
 
   end
@@ -37,11 +38,12 @@ describe Object do
 
     it "invokes assign on the target it is immediately nested within" do
       mock_mysql
-      target(:test_table, 1) do |target1|
+      target(:test_table) do |target1|
         target1.should_receive(:assign)
         assign(:colA) { 42 }
 
-        target(:test_table_2, 1) do |target2|
+        test_table_2 = test_table
+        target(:test_table_2) do |target2|
           target2.should_receive(:assign)
           assign(:colspeak) { 1984 }
         end
