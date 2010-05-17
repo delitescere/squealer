@@ -9,7 +9,7 @@ module Squealer
     end
 
     def initialize(database_connection, table_name, row_id, &block)
-      throw "Block must be given to target (otherwise, there's no work to do)" unless block_given?
+      raise BlockRequired, "Block must be given to target (otherwise, there's no work to do)" unless block_given?
 
       @table_name = table_name.to_s
       @row_id = row_id
@@ -25,12 +25,25 @@ module Squealer
     end
 
     def assign(column_name, &block)
+      raise BlockRequired, "At least specify an empty block, like this:\n  assign(:#{column_name}) {}" unless block_given?
       @column_names << column_name
-      @column_values << block.call
+      @column_values << (yield || infer_value(column_name, &block))
     end
 
 
     private
+
+    def infer_value(column_name, &block)
+      value = block.binding.eval "#{@table_name}.#{column_name}"
+      unless value
+        name = column_name.to_s
+        if name.end_with?("_id")
+          related = name[0..-4]  #strip "_id"
+          value = block.binding.eval "#{related}._id"
+        end
+      end
+      value
+    end
 
     def target(&block)
       Queue.instance.push(self)
@@ -99,8 +112,9 @@ module Squealer
       def initialize
         super([])
       end
-
     end
+
+    class BlockRequired < ArgumentError; end
 
   end
 end

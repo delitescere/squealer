@@ -1,135 +1,200 @@
 require 'spec_helper'
 
 describe Squealer::Target do
-  let(:export_dbc) { mock(Mysql) }
-  let(:table_name) { :test_table }
-  let(:row_id) { 0 }
 
-  before(:each) do
-    Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
-    st = mock(Mysql::Stmt)
-    export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
-    st.should_receive(:execute).at_least(:once)
-  end
-
-  it "sends the sql to the export database" do
-    Squealer::Target.new(export_dbc, table_name, row_id) { nil }
-  end
-
-  describe "#target" do
-
-    it "pushes itself onto the targets stack when starting" do
-      @target1 = nil
-      @target2 = nil
-      target1 = Squealer::Target.new(export_dbc, table_name, row_id) do
-        @target1 = Squealer::Target.current
-        Squealer::Target.new(export_dbc, "#{table_name}_2", row_id) do
-          @target2 = Squealer::Target.current
-          @target2.should_not == @target1
-        end
-      end
-      target1.should === @target1
+  context "assigning" do
+    let(:export_dbc) { mock(Mysql) }
+    before(:each) do
+      Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
+      st = mock(Mysql::Stmt)
+      export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
+      st.should_receive(:execute).at_least(:once)
+    end
+    after(:each) do
+      Squealer::Target::Queue.instance.clear
     end
 
-    it "pops itself off the targets stack when finished" do
-      Squealer::Target.new(export_dbc, table_name, row_id) { nil }
-      Squealer::Target.current.should be_nil
-    end
+    describe "#assign" do
+      let(:col1) { :meaning }
+      let(:value1) { 42 }
+      let(:faqs) { [{'_id' => nil, col1.to_s => value1}] }
+      let(:askers) { [{'_id' => 2001, 'name' => 'Zarathustra'}] }
 
-    context "generates SQL command strings" do
-
-      let(:target) { Squealer::Target.new(export_dbc, table_name, row_id) { nil } }
-
-      it "targets the table" do
-        target.sql.should =~ /^INSERT #{table_name} /
-      end
-
-      it "uses an INSERT ... ON DUPLICATE KEY UPDATE statement" do
-        target.sql.should =~ /^INSERT .* ON DUPLICATE KEY UPDATE /
-      end
-
-      it "includes the primary key name in the INSERT" do
-        target.sql.should =~ / \(id\) VALUES/
-      end
-
-      it "includes the primary key value in the INSERT" do
-        # target.sql.should =~ / VALUES \('#{row_id}'\) /
-        target.sql.should =~ / VALUES \(\?\) /
-      end
-
-    end
-
-    context "with inner block" do
-
-      it "yields inner blocks" do
-        block_done = false
-        target = Squealer::Target.new(export_dbc, table_name, row_id) { block_done = true }
-        block_done.should be_true
-      end
-
-      it "yields inner blocks first" do
-        Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.sql.should be_empty }
-      end
-
-      it "yields inner blocks first and they can assign to this target" do
-        target = Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.assign(:colA) { 42 } }
-        target.sql.should =~ /colA/
-        # target.sql.should =~ /42/
-        target.sql.should =~ /\?/
-      end
-
-      context "with 2 columns" do
-
-        let(:value_1) { 42 }
-        let(:target) do
-          Squealer::Target.new(export_dbc, table_name, row_id) { Squealer::Target.current.assign(:colA) { value_1 } }
+      context "with a block" do
+        it "uses the value from the block" do
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq, faq._id) do
+              assign(col1) { value1 }
+              Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
+              Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
+            end
+          end
         end
-
-        it "includes the column name in the INSERT" do
-          target.sql.should =~ /\(id,colA\) VALUES/
-        end
-
-        it "includes the column value in the INSERT" do
-          # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}'\)/
-          target.sql.should =~ /VALUES \(\?,\?\)/
-        end
-
-        it "includes the column name and value in the UPDATE" do
-          # target.sql.should =~ /UPDATE colA='#{value_1}'/
-          target.sql.should =~ /UPDATE colA=\?/
-        end
-
       end
 
-      context "with 3 columns" do
+      context "without a block" do
+        it "throws an exception" do
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq, faq._id) do
+              lambda { assign(col1) }.should raise_exception
+            end
+          end
+        end
+      end
 
-        let(:value_1) { 42 }
-        let(:value_2) { 'foobar' }
-        let(:target) do
-          Squealer::Target.new(export_dbc, table_name, row_id) do
-            Squealer::Target.current.assign(:colA) { value_1 }
-            Squealer::Target.current.assign(:colB) { value_2 }
+      context "with an empty block" do
+        it "infers source from target name" do
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq, faq._id) do
+              assign(col1) {}
+              Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
+              Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
+            end
           end
         end
 
-        it "includes the column names in the INSERT" do
-          target.sql.should =~ /\(id,colA,colB\) VALUES/
+        it "infers related source from target name" do
+          askers.each do |asker|
+            faqs.each do |faq|
+              Squealer::Target.new(nil, :faq, faq._id) do
+                assign(:asker_id) {}
+                Squealer::Target.current.instance_variable_get('@column_names').should == [:asker_id]
+                Squealer::Target.current.instance_variable_get('@column_values').should == [2001]
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  context "exports" do
+    let(:export_dbc) { mock(Mysql) }
+    let(:table_name) { :test_table }
+    let(:source) { {'_id' => 0}._id }
+
+    before(:each) do
+      Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
+      st = mock(Mysql::Stmt)
+      export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
+      st.should_receive(:execute).at_least(:once)
+    end
+
+    it "sends the sql to the export database" do
+      Squealer::Target.new(export_dbc, table_name, source) { nil }
+    end
+
+    describe "#target" do
+
+      it "pushes itself onto the targets stack when starting" do
+        @target1 = nil
+        @target2 = nil
+        target1 = Squealer::Target.new(export_dbc, table_name, source) do
+          @target1 = Squealer::Target.current
+          Squealer::Target.new(export_dbc, "#{table_name}_2", source) do
+            @target2 = Squealer::Target.current
+            @target2.should_not == @target1
+          end
+        end
+        target1.should === @target1
+      end
+
+      it "pops itself off the targets stack when finished" do
+        Squealer::Target.new(export_dbc, table_name, source) { nil }
+        Squealer::Target.current.should be_nil
+      end
+
+      context "generates SQL command strings" do
+
+        let(:target) { Squealer::Target.new(export_dbc, table_name, source) { nil } }
+
+        it "targets the table" do
+          target.sql.should =~ /^INSERT #{table_name} /
         end
 
-        it "includes the column values in the INSERT" do
-          # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}','#{value_2}'\)/
-          target.sql.should =~ /VALUES \(\?,\?,\?\)/
+        it "uses an INSERT ... ON DUPLICATE KEY UPDATE statement" do
+          target.sql.should =~ /^INSERT .* ON DUPLICATE KEY UPDATE /
         end
 
-        it "includes the column names and values in the UPDATE" do
-          # target.sql.should =~ /UPDATE colA='#{value_1}',colB='#{value_2}'/
-          target.sql.should =~ /UPDATE colA=\?,colB=\?/
+        it "includes the primary key name in the INSERT" do
+          target.sql.should =~ / \(id\) VALUES/
+        end
+
+        it "includes the primary key value in the INSERT" do
+          # target.sql.should =~ / VALUES \('#{row_id}'\) /
+          target.sql.should =~ / VALUES \(\?\) /
         end
 
       end
 
+      context "with inner block" do
+
+        it "yields inner blocks" do
+          block_done = false
+          target = Squealer::Target.new(export_dbc, table_name, source) { block_done = true }
+          block_done.should be_true
+        end
+
+        it "yields inner blocks first" do
+          Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.sql.should be_empty }
+        end
+
+        it "yields inner blocks first and they can assign to this target" do
+          target = Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.assign(:colA) { 42 } }
+          target.sql.should =~ /colA/
+          # target.sql.should =~ /42/
+          target.sql.should =~ /\?/
+        end
+
+        context "with 2 columns" do
+
+          let(:value_1) { 42 }
+          let(:target) do
+            Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.assign(:colA) { value_1 } }
+          end
+
+          it "includes the column name in the INSERT" do
+            target.sql.should =~ /\(id,colA\) VALUES/
+          end
+
+          it "includes the column value in the INSERT" do
+            # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}'\)/
+            target.sql.should =~ /VALUES \(\?,\?\)/
+          end
+
+          it "includes the column name and value in the UPDATE" do
+            # target.sql.should =~ /UPDATE colA='#{value_1}'/
+            target.sql.should =~ /UPDATE colA=\?/
+          end
+
+        end
+
+        context "with 3 columns" do
+
+          let(:value_1) { 42 }
+          let(:value_2) { 'foobar' }
+          let(:target) do
+            Squealer::Target.new(export_dbc, table_name, source) do
+              Squealer::Target.current.assign(:colA) { value_1 }
+              Squealer::Target.current.assign(:colB) { value_2 }
+            end
+          end
+
+          it "includes the column names in the INSERT" do
+            target.sql.should =~ /\(id,colA,colB\) VALUES/
+          end
+
+          it "includes the column values in the INSERT" do
+            # target.sql.should =~ /VALUES \('#{row_id}','#{value_1}','#{value_2}'\)/
+            target.sql.should =~ /VALUES \(\?,\?,\?\)/
+          end
+
+          it "includes the column names and values in the UPDATE" do
+            # target.sql.should =~ /UPDATE colA='#{value_1}',colB='#{value_2}'/
+            target.sql.should =~ /UPDATE colA=\?,colB=\?/
+          end
+        end
+      end
     end
-
   end
-
 end
