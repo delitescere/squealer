@@ -5,7 +5,6 @@ describe Squealer::Target do
   let(:test_table) { {'_id' => 0} }
 
   let(:export_dbc) { mock(Mysql) }
-  before(:each) { mock_mysql }
 
   after(:each) { Squealer::Target::Queue.instance.clear }
 
@@ -15,17 +14,49 @@ describe Squealer::Target do
       let(:faqs) { [{'_id' => 123}] }
 
       context "without a target row id" do
-        it "infers it from the variable with a name matching the target table name" do
-          faqs.each do |faq|
-            Squealer::Target.new(nil, :faq) do |target|
-              target.send(:instance_variable_get, '@row_id').should == faq['_id']
+        context "with the inferred variable in scope" do
+          it "infers the value from the _id field in the hashmap referenced by the variable" do
+            mock_mysql
+
+            faqs.each do |faq|
+              Squealer::Target.new(nil, :faq) do |target|
+                target.send(:instance_variable_get, '@row_id').should == faq['_id']
+              end
             end
+          end
+
+          context "but it doesn't have an _id key" do
+            it "throws an argument error" do
+              hash_with_no_id = {}
+              lambda do
+                Squealer::Target.new(nil, :hash_with_no_id) {}
+              end.should raise_error(ArgumentError)
+            end
+          end
+
+          context "but it isn't a hashmap" do
+            it "throws an argument error" do
+              not_a_hash = nil
+              lambda do
+                Squealer::Target.new(nil, :not_a_hash) {}
+              end.should raise_error(ArgumentError)
+            end
+          end
+        end
+
+        context "without the inferred variable in scope" do
+          it "throws a name error" do
+            lambda do
+              Squealer::Target.new(nil, :missing_variable) {}
+            end.should raise_error(NameError)
           end
         end
       end
 
       context "with a target row id" do
         it "uses the passed value" do
+          mock_mysql
+
           faqs.each do |faq|
             Squealer::Target.new(nil, :faq, 1) do |target|
               target.send(:instance_variable_get, '@row_id').should == 1
@@ -39,6 +70,7 @@ describe Squealer::Target do
 
   context "nesting" do
     it "pushes itself onto the targets stack when starting" do
+      mock_mysql
       @target1 = @target2 = nil
 
       target1 = Squealer::Target.new(export_dbc, table_name) do
@@ -53,6 +85,8 @@ describe Squealer::Target do
     end
 
     it "pops itself off the targets stack when finished" do
+      mock_mysql
+
       Squealer::Target.new(export_dbc, table_name) { nil }
       Squealer::Target.current.should be_nil
     end
@@ -61,12 +95,16 @@ describe Squealer::Target do
 
   context "yielding" do
     it "yields" do
+      mock_mysql
+
       block_done = false
       target = Squealer::Target.new(export_dbc, table_name) { block_done = true }
       block_done.should be_true
     end
 
     it "yields inner blocks before executing its own SQL" do
+      mock_mysql
+
       blocks_done = []
       Squealer::Target.new(export_dbc, table_name) do |target_1|
         blocks_done << target_1
@@ -94,6 +132,8 @@ describe Squealer::Target do
 
       context "with a block" do
         it "uses the value from the block" do
+          mock_mysql
+
           faqs.each do |faq|
             Squealer::Target.new(nil, :faq) do
               assign(col1) { value1 }
@@ -102,46 +142,69 @@ describe Squealer::Target do
             end
           end
         end
+        it "uses the value from the block even if it is nil" do
+          mock_mysql
+
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq) do
+              assign(col1) { nil }
+              Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
+              Squealer::Target.current.instance_variable_get('@column_values').should == [nil]
+            end
+          end
+        end
       end
 
       context "without a block" do
-        it "throws an exception" do
-          faqs.each do |faq|
-            Squealer::Target.new(nil, :faq) do
-              lambda { assign(col1) }.should raise_exception
+        context "with the inferred variable in scope" do
+          it "infers source from target name" do
+            mock_mysql
+
+            faqs.each do |faq|
+              Squealer::Target.new(nil, :faq) do
+                assign(col1)
+                Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
+                Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
+              end
+            end
+          end
+          it "infers related source from target name" do
+            mock_mysql
+
+            askers.each do |asker|
+              faqs.each do |faq|
+                Squealer::Target.new(nil, :faq) do
+                  assign(:asker_id)
+                  Squealer::Target.current.instance_variable_get('@column_names').should == [:asker_id]
+                  Squealer::Target.current.instance_variable_get('@column_values').should == [2001]
+                end
+              end
             end
           end
         end
       end
 
       context "with an empty block" do
-        it "infers source from target name" do
+        it "assumes nil" do
+          mock_mysql
+
           faqs.each do |faq|
             Squealer::Target.new(nil, :faq) do
               assign(col1) {}
               Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
-              Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
+              Squealer::Target.current.instance_variable_get('@column_values').should == [nil]
             end
           end
         end
 
-        it "infers related source from target name" do
-          askers.each do |asker|
-            faqs.each do |faq|
-              Squealer::Target.new(nil, :faq) do
-                assign(:asker_id) {}
-                Squealer::Target.current.instance_variable_get('@column_names').should == [:asker_id]
-                Squealer::Target.current.instance_variable_get('@column_values').should == [2001]
-              end
-            end
-          end
-        end
       end
     end
   end
 
 
   context "exporting" do
+    before(:each) { mock_mysql }
+
     it "sends the sql to the export database" do
       Squealer::Target.new(export_dbc, table_name) { nil }
     end

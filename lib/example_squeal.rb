@@ -26,7 +26,28 @@ import.collection("users").find({}).each do |user|
     #
     # You can use an empty block to infer the value from a field of the same
     # name on the source document...
-    assign(:gender) {} #or# assign(:gender) { user.gender }
+    assign(:gender) #or# assign(:gender) { user.gender }
+
+    #
+    # You can normalize the export...
+    # home_address and work_address are a formatted string like: "661 W Lake St, Suite 3NE, Chicago IL, 60611, USA"
+    addresses = []
+    addresses << atomize_address(user.home_address)
+    addresses << atomize_address(user.work_address)
+    addresses.each do |address|
+      target(:address) do
+        assign(:street)
+        assign(:city)
+        assign(:state)
+        assign(:zip)
+      end
+    end
+
+    #
+    # You can denormalize the export...
+    # user.home_address = { street: '661 W Lake St', city: 'Chicago', state: 'IL' }
+    assign(:home_address) { flatten_address(user.home_address) }
+    assign(:work_address) { flatten_address(user.work_address) }
 
     user.activities.each do |activity|
       target(:activity) do
@@ -35,16 +56,16 @@ import.collection("users").find({}).each do |user|
         # of a parent document where the name of the parent collection matches
         # a variable that is in scope.
         #
-        assign(:user_id) {} #or# assign(:user_id) { user._id }
-        assign(:name) {} #or# assign(:name) { activity.name }
-        assign(:due_date) {} #or# assign(:due_date) { activity.due_date }
+        assign(:user_id) #or# assign(:user_id) { user._id }
+        assign(:name) #or# assign(:name) { activity.name }
+        assign(:due_date) #or# assign(:due_date) { activity.due_date }
       end
 
       activity.tasks.each do |task|
         target(:task) do
-          assign(:user_id) {} #or# assign(:user_id) { user._id }
-          assign(:activity_id) {} #or# assign(:activity_id) { activity._id }
-          assign(:due_date) {} #or# assign(:due_date) { task.due_date }
+          assign(:user_id) #or# assign(:user_id) { user._id }
+          assign(:activity_id) #or# assign(:activity_id) { activity._id }
+          assign(:due_date) #or# assign(:due_date) { task.due_date }
         end
       end #activity.tasks
     end #user.activities

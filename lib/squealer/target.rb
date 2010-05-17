@@ -16,7 +16,11 @@ module Squealer
       raise ArgumentError, "Table name must be supplied" if table_name.to_s.strip.empty?
 
       @table_name = table_name.to_s
-      @row_id = obtain_row_id(row_id, &block)
+      @binding = block.binding
+
+      verify_table_name_in_scope
+
+      @row_id = obtain_row_id(row_id)
       @column_names = []
       @column_values = []
       @sql = ''
@@ -29,41 +33,53 @@ module Squealer
     end
 
     def assign(column_name, &block)
-      raise BlockRequired, "At least specify an empty block, like this:\n  assign(:#{column_name}) {}" unless block_given?
       @column_names << column_name
-      @column_values << (yield || infer_value(column_name, &block))
+      if block_given?
+        @column_values << yield
+      else
+        @column_values << infer_value(column_name, @binding)
+      end
     end
 
 
     private
 
-    def obtain_row_id(row_id, &block)
+    def obtain_row_id(row_id)
       #TODO: Remove in version 1.3 - just call infer_row_id in initialize
       if row_id != nil
         puts "\033[33mWARNING - squealer:\033[0m the 'target' row_id parameter is deprecated and will be invalid in version 1.3 and above. Remove it, and ensure the table_name matches a variable containing a hashmap with an _id key"
         row_id
       else
-        infer_row_id(&block)
+        infer_row_id
       end
     end
 
-    def infer_row_id(&block)
-      block.binding.eval "#{@table_name}._id"
+    def infer_row_id
+      @binding.eval "#{@table_name}._id"
     end
 
-    def infer_value(column_name, &block)
-      value = block.binding.eval "#{@table_name}.#{column_name}"
+    def verify_table_name_in_scope
+      table = @binding.eval "#{@table_name}"
+      raise ArgumentError, "The variable '#{@table_name}' is not a hashmap" unless table.is_a? Hash
+      raise ArgumentError, "The hashmap '#{@table_name}' must have an '_id' key" unless table.has_key? '_id'
+    rescue NameError
+      raise NameError, "A variable named '#{@table_name}' must be in scope, and reference a hashmap with at least an '_id' key."
+    end
+
+
+    def infer_value(column_name, binding)
+      value = binding.eval "#{@table_name}.#{column_name}"
       unless value
         name = column_name.to_s
         if name.end_with?("_id")
           related = name[0..-4]  #strip "_id"
-          value = block.binding.eval "#{related}._id"
+          value = binding.eval "#{related}._id"
         end
       end
       value
     end
 
-    def target(&block)
+    def target
       Queue.instance.push(self)
 
       yield self
