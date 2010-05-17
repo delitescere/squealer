@@ -38,9 +38,9 @@ module Squealer
     private
 
     def obtain_row_id(row_id, &block)
-      #TODO: Remove in version 1.1
+      #TODO: Remove in version 1.3 - just call infer_row_id in initialize
       if row_id != nil
-        puts "\033[33mWARNING - squealer:\033[0m the 'target' row_id parameter is deprecated and will be invalid in version 1.1.x. Remove it, and ensure the table_name matches a variable containing a hashmap with an _id key"
+        puts "\033[33mWARNING - squealer:\033[0m the 'target' row_id parameter is deprecated and will be invalid in version 1.3 and above. Remove it, and ensure the table_name matches a variable containing a hashmap with an _id key"
         row_id
       else
         infer_row_id(&block)
