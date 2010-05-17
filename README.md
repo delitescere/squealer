@@ -10,6 +10,8 @@ To run standalone, simply make your data squeal thusly:
 where the squeal script includes a `require 'squealer'`.
 
 ## Release Notes
+### v1.2.1
+* `Object#import` syntax has changed. Now `import.source(collection).each` rather than `import.collection("users").find({}).each`. `source` returns a MongoDB cursor like `find` does. See lib/example_squeal.rb for options.
 ### v1.2
 * `Object#target` verifies there is a variable in scope with the same name as the `table_name` being targetted, it must be a `Hash` and must have an `_id` key
 * Block to `Object#assign` not required, infers value from source scope

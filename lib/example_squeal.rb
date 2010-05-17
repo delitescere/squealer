@@ -7,7 +7,16 @@ import('localhost', 27017, 'development')
 export('localhost', 'root', '', 'reporting_export')
 
 # Here we extract, transform and load all documents in a collection...
-import.collection("users").find({}).each do |user|
+
+#
+# You don't want to use a find() on the MongoDB collection...
+#   import.source("users") { |users| users.find_one() }.each do |user|
+#
+# Also accepts optional conditions...
+#   import.source("users", "{disabled: 'false'}").each do |user|
+#
+# Defaults to find all...
+import.source("users").each do |user|
   # Insert or Update on table 'user' where 'id' is the column name of the primary key.
   #
   # The primary key value is taken from the '_id' field of the source document,
@@ -70,11 +79,12 @@ import.collection("users").find({}).each do |user|
       end #activity.tasks
     end #user.activities
   end
+  count :users, 1.minute
 end #collection("users")
 
 # Here we use a procedural "join" on related collections to update a target...
-import.collection("organization").find({'disabled_date' : { 'exists' : 'true' }}).each do |organization|
-  import.collection("users").find({ :organization_id => organization.id }) do |user|
+import.source("organization", "'disabled_date' : { 'exists' : 'true' }").each do |organization|
+  import.source("users", { :organization_id => organization.id }) do |user|
     target(:user) do
       #
       # Source boolean values are converted to integer (0 or 1)...
