@@ -1,6 +1,9 @@
 require 'delegate'
 require 'singleton'
 
+#TODO: Use logger and log throughout
+#TODO: Counters and timers
+
 module Squealer
   class Target
 
@@ -8,11 +11,12 @@ module Squealer
       Queue.instance.current
     end
 
-    def initialize(database_connection, table_name, row_id, &block)
+    def initialize(database_connection, table_name, row_id=nil, &block)
       raise BlockRequired, "Block must be given to target (otherwise, there's no work to do)" unless block_given?
+      raise ArgumentError, "Table name must be supplied" if table_name.to_s.strip.empty?
 
       @table_name = table_name.to_s
-      @row_id = row_id
+      @row_id = obtain_row_id(row_id, &block)
       @column_names = []
       @column_values = []
       @sql = ''
@@ -32,6 +36,20 @@ module Squealer
 
 
     private
+
+    def obtain_row_id(row_id, &block)
+      #TODO: Remove in version 1.1
+      if row_id != nil
+        puts "\033[33mWARNING - squealer:\033[0m the 'target' row_id parameter is deprecated and will be invalid in version 1.1.x. Remove it, and ensure the table_name matches a variable containing a hashmap with an _id key"
+        row_id
+      else
+        infer_row_id(&block)
+      end
+    end
+
+    def infer_row_id(&block)
+      block.binding.eval "#{@table_name}._id"
+    end
 
     def infer_value(column_name, &block)
       value = block.binding.eval "#{@table_name}.#{column_name}"

@@ -1,6 +1,44 @@
 require 'spec_helper'
 
 describe Squealer::Target do
+  after(:each) do
+    Squealer::Target::Queue.instance.clear
+  end
+
+  context "targeting" do
+    let(:export_dbc) { mock(Mysql) }
+    before(:each) do
+      Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
+      st = mock(Mysql::Stmt)
+      export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
+      st.should_receive(:execute).at_least(:once)
+    end
+
+    describe "initialize" do
+      let(:faqs) { [{'_id' => 123}] }
+
+      context "without a target row id" do
+        it "infers it from the variable with a name matching the target table name" do
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq) do |target|
+              target.send(:instance_variable_get, '@row_id').should == faq['_id']
+            end
+          end
+        end
+      end
+
+      context "with a target row id" do
+        it "uses the passed value" do
+          faqs.each do |faq|
+            Squealer::Target.new(nil, :faq, 1) do |target|
+              target.send(:instance_variable_get, '@row_id').should == 1
+            end
+          end
+        end
+      end
+
+    end
+  end
 
   context "assigning" do
     let(:export_dbc) { mock(Mysql) }
@@ -23,7 +61,7 @@ describe Squealer::Target do
       context "with a block" do
         it "uses the value from the block" do
           faqs.each do |faq|
-            Squealer::Target.new(nil, :faq, faq._id) do
+            Squealer::Target.new(nil, :faq) do
               assign(col1) { value1 }
               Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
               Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
@@ -35,7 +73,7 @@ describe Squealer::Target do
       context "without a block" do
         it "throws an exception" do
           faqs.each do |faq|
-            Squealer::Target.new(nil, :faq, faq._id) do
+            Squealer::Target.new(nil, :faq) do
               lambda { assign(col1) }.should raise_exception
             end
           end
@@ -45,7 +83,7 @@ describe Squealer::Target do
       context "with an empty block" do
         it "infers source from target name" do
           faqs.each do |faq|
-            Squealer::Target.new(nil, :faq, faq._id) do
+            Squealer::Target.new(nil, :faq) do
               assign(col1) {}
               Squealer::Target.current.instance_variable_get('@column_names').should == [col1]
               Squealer::Target.current.instance_variable_get('@column_values').should == [value1]
@@ -56,7 +94,7 @@ describe Squealer::Target do
         it "infers related source from target name" do
           askers.each do |asker|
             faqs.each do |faq|
-              Squealer::Target.new(nil, :faq, faq._id) do
+              Squealer::Target.new(nil, :faq) do
                 assign(:asker_id) {}
                 Squealer::Target.current.instance_variable_get('@column_names').should == [:asker_id]
                 Squealer::Target.current.instance_variable_get('@column_values').should == [2001]
@@ -71,7 +109,7 @@ describe Squealer::Target do
   context "exports" do
     let(:export_dbc) { mock(Mysql) }
     let(:table_name) { :test_table }
-    let(:source) { {'_id' => 0}._id }
+    let(:test_table) { {'_id' => 0} }
 
     before(:each) do
       Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
@@ -81,7 +119,7 @@ describe Squealer::Target do
     end
 
     it "sends the sql to the export database" do
-      Squealer::Target.new(export_dbc, table_name, source) { nil }
+      Squealer::Target.new(export_dbc, table_name) { nil }
     end
 
     describe "#target" do
@@ -89,9 +127,10 @@ describe Squealer::Target do
       it "pushes itself onto the targets stack when starting" do
         @target1 = nil
         @target2 = nil
-        target1 = Squealer::Target.new(export_dbc, table_name, source) do
+        target1 = Squealer::Target.new(export_dbc, table_name) do
           @target1 = Squealer::Target.current
-          Squealer::Target.new(export_dbc, "#{table_name}_2", source) do
+          test_table_2 = test_table
+          Squealer::Target.new(export_dbc, "#{table_name}_2") do
             @target2 = Squealer::Target.current
             @target2.should_not == @target1
           end
@@ -100,13 +139,13 @@ describe Squealer::Target do
       end
 
       it "pops itself off the targets stack when finished" do
-        Squealer::Target.new(export_dbc, table_name, source) { nil }
+        Squealer::Target.new(export_dbc, table_name) { nil }
         Squealer::Target.current.should be_nil
       end
 
       context "generates SQL command strings" do
 
-        let(:target) { Squealer::Target.new(export_dbc, table_name, source) { nil } }
+        let(:target) { Squealer::Target.new(export_dbc, table_name) { nil } }
 
         it "targets the table" do
           target.sql.should =~ /^INSERT #{table_name} /
@@ -131,16 +170,16 @@ describe Squealer::Target do
 
         it "yields inner blocks" do
           block_done = false
-          target = Squealer::Target.new(export_dbc, table_name, source) { block_done = true }
+          target = Squealer::Target.new(export_dbc, table_name) { block_done = true }
           block_done.should be_true
         end
 
         it "yields inner blocks first" do
-          Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.sql.should be_empty }
+          Squealer::Target.new(export_dbc, table_name) { Squealer::Target.current.sql.should be_empty }
         end
 
         it "yields inner blocks first and they can assign to this target" do
-          target = Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.assign(:colA) { 42 } }
+          target = Squealer::Target.new(export_dbc, table_name) { Squealer::Target.current.assign(:colA) { 42 } }
           target.sql.should =~ /colA/
           # target.sql.should =~ /42/
           target.sql.should =~ /\?/
@@ -150,7 +189,7 @@ describe Squealer::Target do
 
           let(:value_1) { 42 }
           let(:target) do
-            Squealer::Target.new(export_dbc, table_name, source) { Squealer::Target.current.assign(:colA) { value_1 } }
+            Squealer::Target.new(export_dbc, table_name) { Squealer::Target.current.assign(:colA) { value_1 } }
           end
 
           it "includes the column name in the INSERT" do
@@ -174,7 +213,7 @@ describe Squealer::Target do
           let(:value_1) { 42 }
           let(:value_2) { 'foobar' }
           let(:target) do
-            Squealer::Target.new(export_dbc, table_name, source) do
+            Squealer::Target.new(export_dbc, table_name) do
               Squealer::Target.current.assign(:colA) { value_1 }
               Squealer::Target.current.assign(:colB) { value_2 }
             end
