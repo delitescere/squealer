@@ -50,9 +50,11 @@ describe Squealer::Database do
     end
 
     it "counts a total of two from a collection with two documents" do
-      collection = mongodbc.import.source("foo")
-      # collection.???
-      mongodbc.import.collections["foo"].counts.should == {:total => 0}
+      db = mongodbc.send(:instance_variable_get, '@import_dbc').connection.db(@db_name)
+      db.collection('foo').save({'name' => 'Bar'});
+      db.collection('foo').save({'name' => 'Baz'});
+      mongodbc.import.source('foo')
+      mongodbc.import.send(:instance_variable_get, '@collections')['foo'].counts.should == {:total => 2}
     end
 
   end
@@ -70,13 +72,20 @@ describe Squealer::Database do
 
   def create_test_db(name)
     @my = Mysql.connect('localhost', 'root')
-    @my.query("create database #{name}")
+    @my.query("DROP DATABASE IF EXISTS #{name}")
+    @my.query("CREATE DATABASE #{name}")
+
+    drop_mongo(name)
   end
 
   def drop_test_db(name)
-    @my.query("drop database #{name}")
+    @my.query("DROP DATABASE IF EXISTS #{name}")
     @my.close
 
+    drop_mongo(name)
+  end
+
+  def drop_mongo(name)
     mongo = Squealer::Database.instance.import.send(:instance_variable_get, '@dbc')
     mongo.eval('db.dropDatabase()') if mongo
   end

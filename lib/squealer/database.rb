@@ -49,6 +49,7 @@ module Squealer
         @counts = {}
         @collection = dbc.collection(collection)
       end
+
       def source(conditions)
         cursor = block_given? ? yield(@collection) : @collection.find(conditions)
         @counts[:total] = cursor.count
