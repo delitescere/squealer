@@ -41,20 +41,22 @@ describe Squealer::Database do
     before { mongodbc.import_from('localhost', 27017, @db_name) }
 
     it "returns a mongodbc cursor" do
-      mongodbc.import.source("foo").should be_a_kind_of(Mongo::Cursor)
+      mongodbc.import.source('foo').should be_a_kind_of(Mongo::Cursor)
     end
 
     it "counts a total of zero for an empty collection" do
-      mongodbc.import.source("foo")
-      mongodbc.import.collections["foo"].counts.should == {:total => 0}
+      mongodbc.import.source('foo')
+      mongodbc.import.collections['foo'].counts.should == {:total => 0}
     end
 
     it "counts a total of two from a collection with two documents" do
+      # if this looks convoluted to try to use the import database connection
+      # to perform updates, that's because it is. It's for _importing_.
       db = mongodbc.send(:instance_variable_get, '@import_dbc').connection.db(@db_name)
       db.collection('foo').save({'name' => 'Bar'});
       db.collection('foo').save({'name' => 'Baz'});
-      mongodbc.import.source('foo')
-      mongodbc.import.send(:instance_variable_get, '@collections')['foo'].counts.should == {:total => 2}
+      mongodbc.import.source('foo') # activate the counter
+      mongodbc.import.collections['foo'].counts.should == {:total => 2}
     end
 
   end
