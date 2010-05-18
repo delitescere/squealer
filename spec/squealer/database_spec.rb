@@ -40,23 +40,77 @@ describe Squealer::Database do
 
     before { mongodbc.import_from('localhost', 27017, @db_name) }
 
-    it "returns a mongodbc cursor" do
-      mongodbc.import.source('foo').should be_a_kind_of(Mongo::Cursor)
+    it "returns a Source" do
+      mongodbc.import.source('foo').should be_a_kind_of(Squealer::Database::Source)
     end
 
-    it "counts a total of zero for an empty collection" do
-      mongodbc.import.source('foo')
-      mongodbc.import.collections['foo'].counts.should == {:total => 0}
+    describe "Source::cursor" do
+      it "returns a mongodbc cursor" do
+        mongodbc.import.source('foo').cursor.should be_a_kind_of(Mongo::Cursor)
+      end
     end
 
-    it "counts a total of two from a collection with two documents" do
-      # if this looks convoluted to try to use the import database connection
-      # to perform updates, that's because it is. It's for _importing_.
-      db = mongodbc.send(:instance_variable_get, '@import_dbc').connection.db(@db_name)
-      db.collection('foo').save({'name' => 'Bar'});
-      db.collection('foo').save({'name' => 'Baz'});
-      mongodbc.import.source('foo') # activate the counter
-      mongodbc.import.collections['foo'].counts.should == {:total => 2}
+    context "an empty collection" do
+      subject { mongodbc.import.source('foo') }
+
+      it "counts a total of zero" do
+        subject.counts[:total].should == 0
+      end
+
+      it "counts zero imported" do
+        subject.counts[:imported].should == 0
+      end
+
+      it "counts zero exported" do
+        subject.counts[:exported].should == 0
+      end
+    end
+
+    context "a collection with two documents" do
+      subject do
+        # if this looks convoluted to try to use the import database connection
+        # to perform updates, that's because it is. It's for _importing_.
+        db = mongodbc.send(:instance_variable_get, '@import_dbc').connection.db(@db_name)
+        db.collection('foo').save({'name' => 'Bar'});
+        db.collection('foo').save({'name' => 'Baz'});
+        mongodbc.import.source('foo') # activate the counter
+      end
+
+      after do
+        db = mongodbc.send(:instance_variable_get, '@import_dbc').connection.db(@db_name)
+        db.collection('foo').drop
+      end
+
+      it "returns a Source" do
+        subject.should be_a_kind_of(Squealer::Database::Source)
+      end
+
+      it "counts a total of two" do
+        subject.counts[:total].should == 2
+      end
+
+      context "before iterating" do
+        it "counts zero imported" do
+          subject.counts[:imported].should == 0
+        end
+
+        it "counts zero exported" do
+          subject.counts[:exported].should == 0
+        end
+      end
+
+      context "after iterating" do
+        before { subject.each {} }
+
+        it "counts two imported" do
+          subject.counts[:imported].should == 2
+        end
+
+        it "counts two exported" do
+          subject.counts[:exported].should == 2
+        end
+      end
+
     end
 
   end

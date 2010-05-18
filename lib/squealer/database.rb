@@ -43,17 +43,25 @@ module Squealer
     end
 
     class Source
-      attr_reader :counts
+      attr_reader :counts, :cursor
 
       def initialize(dbc, collection)
-        @counts = {}
+        @counts = {:exported => 0, :imported => 0}
         @collection = dbc.collection(collection)
       end
 
       def source(conditions)
-        cursor = block_given? ? yield(@collection) : @collection.find(conditions)
+        @cursor = block_given? ? yield(@collection) : @collection.find(conditions)
         @counts[:total] = cursor.count
-        cursor
+        self
+      end
+
+      def each
+        @cursor.each do |row|
+          @counts[:imported] += 1
+          yield row
+          @counts[:exported] += 1
+        end
       end
     end
   end
