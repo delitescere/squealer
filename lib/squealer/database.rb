@@ -8,6 +8,7 @@ module Squealer
 
     def import_from(host, port, name)
       @import_dbc = Mongo::Connection.new(host, port, :slave_ok => true).db(name)
+      @import_connection = Connection.new(@import_dbc)
     end
 
     def export_to(host, username, password, name)
@@ -15,7 +16,7 @@ module Squealer
     end
 
     def import
-      @import ||= Connection.new(@import_dbc)
+      @import_connection
     end
 
     def export
@@ -34,6 +35,10 @@ module Squealer
         source = Source.new(@dbc, collection)
         @collections[collection] = source
         source.source(conditions, &block)
+      end
+
+      def eval(string)
+        @dbc.eval(string)
       end
     end
 

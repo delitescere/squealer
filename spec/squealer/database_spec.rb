@@ -3,7 +3,6 @@ require 'mongo'
 require 'spec_helper'
 
 describe Squealer::Database do
-
   before(:all) do
     @db_name = "test_export_#{object_id}"
     create_test_db(@db_name)
@@ -18,35 +17,52 @@ describe Squealer::Database do
   end
 
   describe "import" do
+    let(:mongodbc) { Squealer::Database.instance }
+
+    before { mongodbc.import_from('localhost', 27017, @db_name) }
+
     it "takes an import database" do
-      Squealer::Database.instance.import_from('localhost', 27017, @db_name)
-      Squealer::Database.instance.send(:instance_variable_get, '@import_dbc').should be_a_kind_of(Mongo::DB)
+      mongodbc.send(:instance_variable_get, '@import_dbc').should be_a_kind_of(Mongo::DB)
     end
 
     it "returns a squealer connection object" do
-      Squealer::Database.instance.import_from('localhost', 27017, @db_name)
-      Squealer::Database.instance.import.should be_a_kind_of(Squealer::Database::Connection)
+      mongodbc.import.should be_a_kind_of(Squealer::Database::Connection)
+    end
+
+    it "delegates eval to Mongo" do
+      mongodbc.send(:instance_variable_get, '@import_dbc').eval('db.getName()').should == @db_name
+      mongodbc.import.eval('db.getName()').should == @db_name
     end
   end
 
   describe "source" do
-    let(:mongodb) { Squealer::Database.instance }
-    before { mongodb.import_from('localhost', 27017, @db_name) }
+    let(:mongodbc) { Squealer::Database.instance }
 
-    it "returns a mongodb cursor" do
-      mongodb.import.source("foo").should be_a_kind_of(Mongo::Cursor)
+    before { mongodbc.import_from('localhost', 27017, @db_name) }
+
+    it "returns a mongodbc cursor" do
+      mongodbc.import.source("foo").should be_a_kind_of(Mongo::Cursor)
     end
-    it "takes a total count from the cursor" do
-      mongodb.import.source("foo")
-      mongodb.import.collections["foo"].counts.should == {:total => 0}
+
+    it "counts a total of zero for an empty collection" do
+      mongodbc.import.source("foo")
+      mongodbc.import.collections["foo"].counts.should == {:total => 0}
+    end
+
+    it "counts a total of two from a collection with two documents" do
+      collection = mongodbc.import.source("foo")
+      # collection.???
+      mongodbc.import.collections["foo"].counts.should == {:total => 0}
     end
 
   end
 
   describe "export" do
+    let(:mongodbc) { Squealer::Database.instance }
+
     it "takes an export database" do
-      Squealer::Database.instance.export_to('localhost', 'root', '', @db_name)
-      Squealer::Database.instance.send(:instance_variable_get, '@export_dbc').should be_a_kind_of(Mysql)
+      mongodbc.export_to('localhost', 'root', '', @db_name)
+      mongodbc.send(:instance_variable_get, '@export_dbc').should be_a_kind_of(Mysql)
     end
   end
 
@@ -60,5 +76,8 @@ describe Squealer::Database do
   def drop_test_db(name)
     @my.query("drop database #{name}")
     @my.close
+
+    mongo = Squealer::Database.instance.import.send(:instance_variable_get, '@dbc')
+    mongo.eval('db.dropDatabase()') if mongo
   end
 end
