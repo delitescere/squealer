@@ -16,7 +16,7 @@ export('localhost', 'root', '', 'reporting_export')
 #   import.source("users", "{disabled: 'false'}").each do |user|
 #
 # Defaults to find all...
-import.source("users").each do |user|
+import.source('users').each do |user|
   # Insert or Update on table 'user' where 'id' is the column name of the primary key.
   #
   # The primary key value is taken from the '_id' field of the source document,
@@ -63,8 +63,7 @@ import.source("users").each do |user|
         #
         # You can use an empty block to infer the value from the '_id' field
         # of a parent document where the name of the parent collection matches
-        # a variable that is in scope.
-        #
+        # a variable that is in scope...
         assign(:user_id) #or# assign(:user_id) { user._id }
         assign(:name) #or# assign(:name) { activity.name }
         assign(:due_date) #or# assign(:due_date) { activity.due_date }
@@ -79,12 +78,11 @@ import.source("users").each do |user|
       end #activity.tasks
     end #user.activities
   end
-  count :users, 1.minute
 end #collection("users")
 
 # Here we use a procedural "join" on related collections to update a target...
-import.source("organization", "'disabled_date' : { 'exists' : 'true' }").each do |organization|
-  import.source("users", { :organization_id => organization.id }) do |user|
+import.source('organization', {'disabled_date' => {'exists' => true}}).each do |organization|
+  import.source('users', {'organization_id' => organization.id}) do |user|
     target(:user) do
       #
       # Source boolean values are converted to integer (0 or 1)...
