@@ -11,7 +11,10 @@ module Squealer
 
     def tick
       @start_time ||= Time.new
+      @emitter ||= start_emitter
+
       @ticks += 1
+
       @end_time = Time.new if done?
     end
 
@@ -23,6 +26,13 @@ module Squealer
 
     private
 
+    def start_emitter
+      Thread.new do
+        emit
+        sleep(1) and emit until done?
+      end
+    end
+
     def emit_final
       console.puts
 
@@ -32,7 +42,7 @@ module Squealer
     end
 
     def done?
-      ticks == total
+      ticks >= total
     end
 
     def start_time

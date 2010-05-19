@@ -4,12 +4,40 @@ describe Squealer::ProgressBar do
   let(:total) { 200 }
   let(:progress_bar) do
     testable_progress_bar = Class.new(Squealer::ProgressBar) do
+      attr_reader :emitter
       public :total, :ticks, :percentage, :progress_markers,
              :duration, :start_time, :end_time, :progress_bar_width
+
+      def console
+        @console ||= StringIO.new
+      end
+
+      alias real_start_emitter start_emitter 
+      def start_emitter; end
+      public :real_start_emitter
+
     end
     testable_progress_bar.new(total)
   end
+  let(:console) { progress_bar.console }
   let(:progress_bar_width) { progress_bar.progress_bar_width }
+
+  context "threaded" do
+    before { progress_bar.stub(:start_emitter).and_return(progress_bar.real_start_emitter) }
+    after { progress_bar.emitter.kill }
+
+    it "has an emitter" do
+      progress_bar.tick
+      progress_bar.emitter.should_not be_nil
+    end
+
+    it "emits at least once" do
+      progress_bar.tick
+      progress_bar.emitter.wakeup
+      sleep 0.1
+      console.string.split("\r").length.should > 0
+    end
+  end
 
   context "no items completed" do
     it "emits the total number provided" do
@@ -25,8 +53,6 @@ describe Squealer::ProgressBar do
     end
 
     it "prints a progress bar to the console" do
-      console = StringIO.new
-      progress_bar.stub(:console).and_return(console)
       progress_bar.emit
       console.string.should == "\r[#{' ' * progress_bar_width}]   #{0}/#{total} (0%)"
     end
@@ -63,8 +89,6 @@ describe Squealer::ProgressBar do
     end
 
     it "prints a progress bar to the console" do
-      console = StringIO.new
-      progress_bar.stub(:console).and_return(console)
       progress_bar.emit
       percentag = (ticks.to_f * 100 / total).floor
       console.string.should == "\r[=#{' ' * (progress_bar_width - 1)}]   #{ticks}/#{total} (#{percentag}%)"
@@ -109,19 +133,15 @@ describe Squealer::ProgressBar do
     end
 
     it "prints a progress bar to the console" do
-      console = StringIO.new
-      progress_bar.stub(:console).and_return(console)
       progress_bar.emit
       console.string.split("\n").first.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%)"
     end
   end
 
   context "multiple emits" do
-    let(:console) { StringIO.new }
     let(:ticks) { total }
     subject { console.string }
     before do
-      progress_bar.stub(:console).and_return(console)
       progress_bar.emit
     end
 
