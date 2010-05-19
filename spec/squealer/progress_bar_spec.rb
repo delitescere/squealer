@@ -4,8 +4,8 @@ describe Squealer::ProgressBar do
   let(:total) { 200 }
   let(:progress_bar) do
     testable_progress_bar = Class.new(Squealer::ProgressBar) do
-      attr_accessor :start_time, :end_time, :progress_bar_width
-      public :total, :ticks, :percentage, :progress_markers
+      public :total, :ticks, :percentage, :progress_markers,
+             :duration, :start_time, :end_time, :progress_bar_width
     end
     testable_progress_bar.new(total)
   end
@@ -112,7 +112,7 @@ describe Squealer::ProgressBar do
       console = StringIO.new
       progress_bar.stub(:console).and_return(console)
       progress_bar.emit
-      console.string.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%)\n"
+      console.string.split("\n").first.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%)"
     end
   end
 
@@ -141,6 +141,15 @@ describe Squealer::ProgressBar do
 
         subject.split("\r").size.should == 3
         subject[-1, 1].should == "\n"
+      end
+
+      it "emitted final timings" do
+        ticks.times { progress_bar.tick }
+        progress_bar.emit
+
+        subject.should include("Start: #{progress_bar.start_time}\n")
+        subject.should include("End: #{progress_bar.end_time}\n")
+        subject.should include("Duration: #{progress_bar.duration}\n")
       end
     end
   end

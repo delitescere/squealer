@@ -6,7 +6,7 @@ module Squealer
       @ticks = 0
 
       @progress_bar_width = 50
-      @count_width = @total.to_s.size
+      @count_width = total.to_s.size
     end
 
     def tick
@@ -18,13 +18,29 @@ module Squealer
     def emit
       format = "\r[%-#{progress_bar_width}s] %#{count_width}i/%i (%i%%)"
       console.print format % [progress_markers, ticks, total, percentage]
-      console.puts if done?
+      emit_final if done?
     end
 
     private
 
+    def emit_final
+      console.puts
+
+      console.puts "Start: #{start_time}"
+      console.puts "End: #{end_time}"
+      console.puts "Duration: #{duration}"
+    end
+
     def done?
       ticks == total
+    end
+
+    def start_time
+      @start_time
+    end
+
+    def end_time
+      @end_time
     end
 
     def ticks
@@ -53,6 +69,14 @@ module Squealer
 
     def count_width
       @count_width
+    end
+
+    def total_time
+      @end_time - @start_time
+    end
+
+    def duration
+      Time.at(total_time).utc.strftime("%H:%M:%S.%N")
     end
 
   end
