@@ -100,7 +100,10 @@ describe Squealer::Database do
       end
 
       context "after iterating" do
-        before { subject.each {} }
+        before do
+          subject.send(:instance_variable_set, '@progress_bar', nil)
+          subject.each {}
+        end
 
         it "counts two imported" do
           subject.counts[:imported].should == 2

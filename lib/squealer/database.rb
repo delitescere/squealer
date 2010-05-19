@@ -53,6 +53,7 @@ module Squealer
       def source(conditions)
         @cursor = block_given? ? yield(@collection) : @collection.find(conditions)
         @counts[:total] = cursor.count
+        @progress_bar = Squealer::ProgressBar.new(cursor.count)
         self
       end
 
@@ -60,6 +61,7 @@ module Squealer
         @cursor.each do |row|
           @counts[:imported] += 1
           yield row
+          @progress_bar.tick if @progress_bar
           @counts[:exported] += 1
         end
       end
