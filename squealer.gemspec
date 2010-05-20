@@ -8,10 +8,12 @@ Gem::Specification.new do |s|
   s.version = "2.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Josh Graham", "Durran Jordan"]
+  s.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
   s.date = %q{2010-05-20}
+  s.default_executable = %q{skewer}
   s.description = %q{Exports mongodb to mysql. More later.}
   s.email = %q{joshua.graham@grahamis.com}
+  s.executables = ["skewer"]
   s.extra_rdoc_files = [
     "README.md"
   ]
@@ -22,6 +24,7 @@ Gem::Specification.new do |s|
      "README.md",
      "Rakefile",
      "VERSION",
+     "bin/skewer",
      "lib/.example_squeal.rb.swp",
      "lib/example_squeal.rb",
      "lib/squealer.rb",

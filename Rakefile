@@ -13,7 +13,11 @@ begin
     gemspec.description = "Exports mongodb to mysql. More later."
     gemspec.email = "joshua.graham@grahamis.com"
     gemspec.homepage = "http://github.com/delitescere/squealer/"
-    gemspec.authors = ["Josh Graham", "Durran Jordan"]
+    gemspec.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
+
+    gemspec.default_executable = "skewer"
+    gemspec.executables = ["skewer"]
+
     gemspec.add_dependency('mysql', '>= 2.8.1')
     gemspec.add_dependency('mongo', '>= 0.18.3')
     gemspec.add_dependency('bson_ext', '>= 1.0.1')
