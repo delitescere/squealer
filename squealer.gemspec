@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "2.1.0"
+  s.version = "2.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
@@ -28,7 +28,6 @@ Gem::Specification.new do |s|
      "lib/.example_squeal.rb.swp",
      "lib/example_squeal.rb",
      "lib/squealer.rb",
-     "lib/squealer/boolean.rb",
      "lib/squealer/database.rb",
      "lib/squealer/hash.rb",
      "lib/squealer/object.rb",
@@ -38,7 +37,6 @@ Gem::Specification.new do |s|
      "lib/tasks/jeweler.rake",
      "spec/spec.opts",
      "spec/spec_helper.rb",
-     "spec/squealer/boolean_spec.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
@@ -50,11 +48,10 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/delitescere/squealer/}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.6}
+  s.rubygems_version = %q{1.3.5}
   s.summary = %q{Document-oriented to Relational database exporter}
   s.test_files = [
     "spec/spec_helper.rb",
-     "spec/squealer/boolean_spec.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
