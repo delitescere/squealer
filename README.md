@@ -10,8 +10,15 @@ To run standalone, simply make your data squeal thusly:
 where the squeal script includes a `require 'squealer'`.
 
 ## Release Notes
+### v2.1
+* Ruby 1.8.6 back-compatibility added. Using `eval "", binding, __FILE__, __LINE__` instead of `binding.eval`
+* Target SQL script using backtick-quoted (mySQL) identifiers to avoid column-name / keyword conflict
+* Automatically typecast Ruby `Boolean` (to integer), `Symbol` (to string), `Array` (to comma-seperated string)
+* Improved handling and reporting of Target SQL errors
+* Schaefer's Special "skewer" Script to reflect on Mongoid models and generate an initial squeal script and SQL schema DDL script. This tool is intended to build the _initial_ scripts only. It is extremely useful to get you going, but do think about the needs of the consumer of the export database, and adjust the scripts to suit. [How do you make something squeal? You skewer it!]
+
 ### v2.0
-* `Object#import` now wraps a MongoDB cursor to provide counters and timings. Only `each` is supported for now.
+* `Object#import` now wraps a MongoDB cursor to provide counters and timings. Only `each` is supported for now, however `source` takes optional conditions.
 * Progress bar and summary.
 
 ### v1.2.1
