@@ -1,6 +1,6 @@
+require 'spec_helper'
 require 'mysql'
 require 'mongo'
-require 'spec_helper'
 
 describe Squealer::Database do
   it "is a singleton" do
