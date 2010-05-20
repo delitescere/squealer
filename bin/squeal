@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+
+model = ARGV[0]
+unless model
+  $stderr.puts "usage: squeal ModelName"
+  exit 1
+end
+
+require 'config/boot'
+require 'config/environment'
+
+model = Object.const_get(model)
+
+fields = model.fields.values.sort_by(&:name)
+associations = model.associations
+
+# SQL #
+def create_table(model, parent = nil)
+  fields = model.fields.values.sort_by(&:name)
+  columns = []
+  columns << "`id` CHAR(24) PRIMARY KEY"
+  columns << "`#{parent.name.underscore}_id` CHAR(24)" if parent
+
+  fields.each do |field|
+    mysql_type = case field.type.name
+                 when "Boolean"
+                   "BOOLEAN"
+                 when "Time"
+                   "TIMESTAMP"
+                 when "Date"
+                   "DATE"
+                 when "Float"
+                   "FLOAT(10,2)"
+                 when "Integer"
+                   "INT"
+                 else
+                   "TEXT"
+                 end
+    columns << "`#{field.name[0..63]}` #{mysql_type}"
+  end
+
+  table_name = if parent
+                 "#{parent.name.underscore}_#{model.name.underscore}"
+               else
+                 "#{model.name.underscore}"
+               end
+
+  "DROP TABLE IF EXISTS `#{table_name}`; CREATE TABLE `#{table_name}` (#{columns.join(", ")});"
+end
+
+# SQUEAL #
+
+def create_squeal(model, indent=false, parents = [])
+  fields = model.fields.values.sort_by(&:name)
+
+  parent = parents.last
+  table_name = if parent
+                 "#{parent.name.underscore}_#{model.name.underscore}"
+               else
+                 "#{model.name.underscore}"
+               end
+
+  squeal = if parent
+    "#{parent.name.underscore}.#{model.name.tableize}.each do |#{model.name.underscore}|\n" \
+    "  #{table_name} = #{model.name.underscore}"
+  else
+    "import.source(\"#{model.name.tableize}\").each do |#{model.name.underscore}|"
+  end
+
+  schemas = [create_table(model, parent)]
+
+  squeal << <<-EOS
+
+  target(:#{table_name}) do
+  EOS
+  if parent
+    squeal << <<-EOS
+    assign(:#{parent.name.underscore}_id)
+    EOS
+  end
+
+  fields.each do |field|
+    field_name = field.name
+    case
+    when %w(type target).include?(field.name)
+      value = " { #{table_name}['#{field.name}'] }"
+    when field.name.size > 64
+      field_name = field.name[0..63]
+      value = " { #{table_name}.#{field.name} }"
+    when field.name =~ /(.*)_id$/
+      value = " { #{table_name}.#{$1} }"
+    end
+    squeal << <<-EOS
+    assign(:#{field_name})#{value}
+    EOS
+  end
+
+  model.associations.values.each do |association|
+    begin
+      if [Mongoid::Associations::HasMany, Mongoid::Associations::HasOne].include?(association.association)
+        unless parents.include?(association.klass)
+          ruby, sql = create_squeal(association.klass, true, parents | [model]) 
+          squeal << "\n" + ruby + "\n"
+          schemas |= sql
+        end
+      end
+    rescue NameError
+    end
+  end
+
+  squeal << <<-EOS
+  end
+end
+  EOS
+  squeal.gsub!(/^/, "    ") if indent
+  return squeal, schemas
+end
+
+squeal, schema = create_squeal(model)
+
+if ARGV[1] == "sql"
+  puts schema.join("\n")
+else
+  puts squeal
+end

@@ -103,8 +103,10 @@ module Squealer
 
     def execute_sql(sql)
       statement = Database.instance.export.prepare(sql)
-      values = [*column_values] + [*column_values]  #array expando
-      statement.send(:execute, @row_id, *values) #expand values into distinct arguments
+
+      statement.send(:execute, @row_id, *(typecast_values * 2)) #expand values into distinct arguments
+    rescue Mysql::Error, TypeError
+      raise "Failed to execute statement: #{sql} with #{values.inspect}. Raised: #{$!.to_s}"
     end
 
     def pk_name
@@ -113,7 +115,7 @@ module Squealer
 
     def column_names
       return if @column_names.size == 0
-      ",#{@column_names.join(',')}"
+      ",#{@column_names.map { |name| quote_identifier(name) }.join(',')}"
     end
 
     def column_values
@@ -130,8 +132,27 @@ module Squealer
     def column_markers
       return if @column_names.size == 0
       result = ""
-      @column_names.each {|k| result << "#{k}=?," }
+      @column_names.each {|k| result << "#{quote_identifier(k)}=?," }
       result.chop
+    end
+
+    def typecast_values
+      column_values.map do |value|
+        case value
+        when true, false
+          value.to_i
+        when Symbol
+          value.to_s
+        when Array
+          value.join(",")
+        else
+          value
+        end
+      end
+    end
+
+    def quote_identifier(name)
+      "`#{name}`"
     end
 
     class Queue < DelegateClass(Array)
