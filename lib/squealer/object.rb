@@ -27,6 +27,7 @@ class Object
 end
 
 class NilClass
+  include Enumerable
   def each
     []
   end

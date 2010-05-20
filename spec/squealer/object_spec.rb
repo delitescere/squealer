@@ -7,6 +7,13 @@ describe NilClass do
       nil.each.should == [] # because mongo is schema-less
     end
   end
+
+  describe "#reject" do
+    it "returns an empty array" do
+      nil.reject{false}.should == [] # because mongo is schema-less
+    end
+  end
+
 end
 
 describe Object do
