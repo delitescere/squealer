@@ -104,7 +104,8 @@ module Squealer
     end
 
     def duration
-      Time.at(total_time).utc.strftime("%H:%M:%S.%N")
+      duration = Time.at(total_time).utc
+      duration.strftime("%H:%M:%S.#{duration.usec}")
     end
 
   end

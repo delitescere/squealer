@@ -55,11 +55,11 @@ module Squealer
     end
 
     def infer_row_id
-      @binding.eval "#{@table_name}._id"
+      eval "#{@table_name}._id", @binding, __FILE__, __LINE__
     end
 
     def verify_table_name_in_scope
-      table = @binding.eval "#{@table_name}"
+      table = eval "#{@table_name}", @binding, __FILE__, __LINE__
       raise ArgumentError, "The variable '#{@table_name}' is not a hashmap" unless table.is_a? Hash
       raise ArgumentError, "The hashmap '#{@table_name}' must have an '_id' key" unless table.has_key? '_id'
     rescue NameError
@@ -68,12 +68,12 @@ module Squealer
 
 
     def infer_value(column_name, binding)
-      value = binding.eval "#{@table_name}.#{column_name}"
+      value = eval "#{@table_name}.#{column_name}", binding, __FILE__, __LINE__
       unless value
         name = column_name.to_s
-        if name.end_with?("_id")
+        if name =~ /_id$/
           related = name[0..-4]  #strip "_id"
-          value = binding.eval "#{related}._id"
+          value = eval "#{related}._id", binding, __FILE__, __LINE__
         end
       end
       value
