@@ -140,8 +140,10 @@ module Squealer
     def typecast_values
       column_values.map do |value|
         case value
-        when true, false
-          value.to_i
+        when true
+          1
+        when false
+          0
         when Symbol
           value.to_s
         when Array
