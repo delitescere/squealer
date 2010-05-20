@@ -209,6 +209,31 @@ describe Squealer::Target do
     end
 
     describe "#target" do
+      describe "#typecast_values" do
+        subject { target.send(:typecast_values) }
+        let(:target) { Squealer::Target.new(export_dbc, table_name) {} }
+
+        it "casts array to comma-separated string" do
+          target.assign(:colA) { ['1', '2'] }
+          subject.should == ['1,2']
+        end
+
+        it "casts false to 0 (for mysql TINYINT)" do
+          target.assign(:colA) { false }
+          subject.should == [0]
+        end
+
+        it "casts true to 1 (for mysql TINYINT)" do
+          target.assign(:colA) { true }
+          subject.should == [1]
+        end
+
+        it "casts symbol to string" do
+          target.assign(:colA) { :open }
+          subject.should == ['open']
+        end
+      end
+
       context "generates SQL command strings" do
         let(:target) { Squealer::Target.new(export_dbc, table_name) { nil } }
 
@@ -238,7 +263,7 @@ describe Squealer::Target do
         end
 
         it "includes the column name in the INSERT" do
-          target.sql.should =~ /\(id,colA\) VALUES/
+          target.sql.should =~ /\(id,`colA`\) VALUES/
         end
 
         it "includes the column value in the INSERT" do
@@ -248,7 +273,7 @@ describe Squealer::Target do
 
         it "includes the column name and value in the UPDATE" do
           # target.sql.should =~ /UPDATE colA='#{value_1}'/
-          target.sql.should =~ /UPDATE colA=\?/
+          target.sql.should =~ /UPDATE `colA`=\?/
         end
 
       end
@@ -264,7 +289,7 @@ describe Squealer::Target do
         end
 
         it "includes the column names in the INSERT" do
-          target.sql.should =~ /\(id,colA,colB\) VALUES/
+          target.sql.should =~ /\(id,`colA`,`colB`\) VALUES/
         end
 
         it "includes the column values in the INSERT" do
@@ -274,7 +299,7 @@ describe Squealer::Target do
 
         it "includes the column names and values in the UPDATE" do
           # target.sql.should =~ /UPDATE colA='#{value_1}',colB='#{value_2}'/
-          target.sql.should =~ /UPDATE colA=\?,colB=\?/
+          target.sql.should =~ /UPDATE `colA`=\?,`colB`=\?/
         end
       end
     end
