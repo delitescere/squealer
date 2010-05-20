@@ -58,12 +58,14 @@ module Squealer
       end
 
       def each
+        @progress_bar.start if @progress_bar
         @cursor.each do |row|
           @counts[:imported] += 1
           yield row
           @progress_bar.tick if @progress_bar
           @counts[:exported] += 1
         end
+        @progress_bar.finish if @progress_bar
       end
     end
   end

@@ -81,7 +81,7 @@ import.source('users').each do |user|
 end #collection("users")
 
 # Here we use a procedural "join" on related collections to update a target...
-import.source('organization', {'disabled_date' => {'exists' => true}}).each do |organization|
+import.source('organizations', {'disabled_date' => {'exists' => true}}).each do |organization|
   import.source('users', {'organization_id' => organization.id}) do |user|
     target(:user) do
       #

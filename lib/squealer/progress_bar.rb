@@ -1,27 +1,39 @@
 module Squealer
   class ProgressBar
 
+    @@progress_bar = nil
+
+    def self.new(*args)
+      if @@progress_bar
+        nil
+      else
+        @@progress_bar = super
+      end
+    end
+
     def initialize(total)
       @total = total
       @ticks = 0
 
       @progress_bar_width = 50
       @count_width = total.to_s.size
+
+    end
+
+    def start
+      @start_time = Time.new
+      @emitter = start_emitter if total > 0
+      self
+    end
+
+    def finish
+      @end_time = Time.new
+      @emitter.wakeup.join if @emitter
+      @@progress_bar = nil
     end
 
     def tick
-      @start_time ||= Time.new
-      @emitter ||= start_emitter
-
       @ticks += 1
-
-      @end_time = Time.new if done?
-    end
-
-    def emit
-      format = "\r[%-#{progress_bar_width}s] %#{count_width}i/%i (%i%%)"
-      console.print format % [progress_markers, ticks, total, percentage]
-      emit_final if done?
     end
 
     private
@@ -33,6 +45,12 @@ module Squealer
       end
     end
 
+    def emit
+      format = "\r[%-#{progress_bar_width}s] %#{count_width}i/%i (%i%%)"
+      console.print format % [progress_markers, ticks, total, percentage]
+      emit_final if done?
+    end
+
     def emit_final
       console.puts
 
@@ -42,7 +60,7 @@ module Squealer
     end
 
     def done?
-      ticks >= total
+      ticks >= total || end_time
     end
 
     def start_time

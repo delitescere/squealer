@@ -5,7 +5,7 @@ describe Squealer::ProgressBar do
   let(:progress_bar) do
     testable_progress_bar = Class.new(Squealer::ProgressBar) do
       attr_reader :emitter
-      public :total, :ticks, :percentage, :progress_markers,
+      public :total, :ticks, :percentage, :progress_markers, :emit,
              :duration, :start_time, :end_time, :progress_bar_width
 
       def console
@@ -17,13 +17,28 @@ describe Squealer::ProgressBar do
       public :real_start_emitter
 
     end
-    testable_progress_bar.new(total)
+    testable_progress_bar.new(total).start
   end
   let(:console) { progress_bar.console }
   let(:progress_bar_width) { progress_bar.progress_bar_width }
 
+  before { progress_bar.start }
+  after { progress_bar.finish }
+
+  it "allows only one progress bar at a time" do
+    Squealer::ProgressBar.new(0).should be_nil
+  end
+
+  it "records the starting time" do
+    progress_bar.start_time.should be_an_instance_of(Time)
+  end
+
+  it "records the starting time" do
+    progress_bar.start_time.should be_an_instance_of(Time)
+  end
+
   context "threaded" do
-    before { progress_bar.stub(:start_emitter).and_return(progress_bar.real_start_emitter) }
+    before { progress_bar.stub(:emitter).and_return(progress_bar.real_start_emitter) }
     after { progress_bar.emitter.kill }
 
     it "has an emitter" do
@@ -66,10 +81,6 @@ describe Squealer::ProgressBar do
 
     it "emits the number of ticks as a percentage of the total number (rounded down)" do
       progress_bar.percentage.should == 0
-    end
-
-    it "records the starting time on the first tick" do
-      progress_bar.start_time.should be_an_instance_of(Time)
     end
   end
 
@@ -128,11 +139,13 @@ describe Squealer::ProgressBar do
       progress_bar.progress_markers.size.should == progress_bar_width
     end
 
-    it "records the ending time on the last tick" do
+    it "records the ending time when finished" do
+      progress_bar.finish
       progress_bar.end_time.should be_an_instance_of(Time)
     end
 
     it "prints a progress bar to the console" do
+      progress_bar.finish
       progress_bar.emit
       console.string.split("\n").first.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%)"
     end
@@ -157,6 +170,7 @@ describe Squealer::ProgressBar do
     context "done" do
       it "emitted two lines with a final newline" do
         ticks.times { progress_bar.tick }
+        progress_bar.finish
         progress_bar.emit
 
         subject.split("\r").size.should == 3
@@ -165,6 +179,7 @@ describe Squealer::ProgressBar do
 
       it "emitted final timings" do
         ticks.times { progress_bar.tick }
+        progress_bar.finish
         progress_bar.emit
 
         subject.should include("Start: #{progress_bar.start_time}\n")
