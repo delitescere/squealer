@@ -1,19 +1,15 @@
 #!/usr/bin/env ruby
 
 model = ARGV[0]
-unless model
-  $stderr.puts "usage: skewer ModelName"
-  exit 1
-end
+abort "usage: skewer ModelName" unless model
 
 require 'config/boot'
 require 'config/environment'
 
 model = Object.const_get(model)
 
-unless defined?(Mongoid) and Mongoid::Document > model
-  $stderr.puts "#{model} must be a Mongoid::Document"
-  exit 1
+unless defined?(Mongoid) && Mongoid::Document > model
+  abort "#{model} must be a Mongoid::Document"
 end
 
 write_schema = true
