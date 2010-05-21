@@ -9,6 +9,15 @@ To run standalone, simply make your data squeal thusly:
 
 where the squeal script includes a `require 'squealer'`.
 
+## Rationale
+* For some reason cranky old data guys think Coad was the first person to invent a data modelling paradigm
+* Josh Graham is crankier and in many cases older (although much better looking) than your cranky old DBA, so he remembers when there were no Relational Databases around, and one had to construct queries that explicitly traversed the network or hierarchical databases of the time (or even the indexed file systems). CODASYL, can you spell it?
+* Although many business problems are best expressed in terms of a spreadsheet (a tuple space), and despite the somewhat disturbing fact that the majority of the world's critical commercial systems hinge on Excel spreadsheets, not every problem is best modelled this way
+* MongoDB (along with a growing number of other "Not only SQL" databases) provides an alternate mechanism to store data in a way that naturally reflects the real-world problem. Simpler application code, higher performance and straight-forward scalabiltity are natural benefits of modelling in a way that most closely reflects reality
+* At the inaugural QCon San Francisco in a discussion with Martin Fowler and Ola Bini, Josh postulated that ORMs had it the wrong way around: that the application should be persisting its data in a manner natural to it, and that external systems (like reporting and decision support systems - or even numbskull integration at the persistence layer) should bear the cost of mapping. With the huge efforts put into noSQL engines like MongoDB, neo4j, Redis, Hadoop, CouchDB, Memcached, et cetera, has come a rise in popularity. With this increased and broader usage comes people who are looking for tools to make these data stores more accessible. The application is no longer bearing the cost of mapping - it's now time for the ancillary and external systems to pick up the bill!
+* squealer provides a simple, declarative language for mapping values from trees into relations. It is inherently flexibile by being an internal Ruby DSL, so any imperative traversal or mapping logic can be expressed
+* It can be used both in bulk operations on many documents (e.g. a periodic batch job) or executed for one document asynchronously as part of an after_save method (e.g. via a Resque job). It is possible that more work may done on this event-driven approach, perhaps in the form of a squealerd, to reduce latency.
+
 ## Release Notes
 ### v2.1
 * Ruby 1.8.6 back-compatibility added. Using `eval "", binding, __FILE__, __LINE__` instead of `binding.eval`
@@ -40,7 +49,7 @@ Squealer is for _standalone_ operation. DO NOT use it directly from within your 
 * `TrueClass#to_i` - You'll be storing booleans as a `tinyint(1)`, or similar. `true` is `1`.
 
 ## It is a data mapper, it doesn't use one.
-Squealer doesn't use your application classes. It doesn't use your ActiveRecord models. It doesn't use mongoid (as awesome as that is), or mongomapper. It's an ETL tool. It could even be called a HRM (Hashmap-Relational-Mapper), but only in hushed tones in the corner boothes of dark pubs. It directly uses the Ruby driver for MongoDB and the Ruby driver for mySQL.
+Squealer doesn't use your application classes. It doesn't use your ActiveRecord models. It doesn't use mongoid (as awesome as that is), mongodoc, or mongomapper. It's an ETL tool. It could even be called a HRM (Hashmap-Relational-Mapper), but only in hushed tones in the corner boothes of dark pubs. It directly uses the Ruby driver for MongoDB and the Ruby driver for mySQL.
 
 ## Databases supported
 For now, this is specifically for _MongoDB_ exporting to _mySQL_.

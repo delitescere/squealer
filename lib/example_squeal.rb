@@ -41,7 +41,7 @@ import.source('users').each do |user|
     # You can normalize the export...
     # home_address and work_address are a formatted string like: "661 W Lake St, Suite 3NE, Chicago IL, 60611, USA"
     addresses = []
-    addresses << atomize_address(user.home_address)
+    addresses << atomize_address(user.home_address) # atomize_address is some custom method of yours
     addresses << atomize_address(user.work_address)
     addresses.each do |address|
       target(:address) do
@@ -55,7 +55,7 @@ import.source('users').each do |user|
     #
     # You can denormalize the export...
     # user.home_address = { street: '661 W Lake St', city: 'Chicago', state: 'IL' }
-    assign(:home_address) { flatten_address(user.home_address) }
+    assign(:home_address) { flatten_address(user.home_address) } # flatten_address is some custom method of yours
     assign(:work_address) { flatten_address(user.work_address) }
 
     user.activities.each do |activity|
