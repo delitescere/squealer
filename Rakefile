@@ -21,6 +21,8 @@ begin
     gemspec.add_dependency('mysql', '>= 2.8.1')
     gemspec.add_dependency('mongo', '>= 0.18.3')
     gemspec.add_dependency('bson_ext', '>= 1.0.1')
+
+    gemspec.add_development_dependency('rspec', '>= 1.3.0')
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
