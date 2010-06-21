@@ -1,5 +1,8 @@
-require 'mysql'
 require 'mongo'
+require 'data_objects'
+require 'mysql'
+require 'do_mysql'
+
 require 'singleton'
 
 module Squealer
@@ -12,7 +15,7 @@ module Squealer
     end
 
     def export_to(host, username, password, name)
-      @export_dbc = Mysql.connect(host, username, password, name)
+      @export_do = DataObjects::Connection.new("mysql://#{username}:#{password}@#{host}/#{name}")
     end
 
     def import
@@ -20,7 +23,7 @@ module Squealer
     end
 
     def export
-      @export_dbc
+      @export_do
     end
 
     class Connection

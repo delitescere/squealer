@@ -11,7 +11,7 @@ describe Squealer::Target do
 
   context "targeting" do
     describe "initialize" do
-      let(:faqs) { [{'_id' => 123}] }
+      let(:faqs) { [{'_id' => '123'}] }
 
       context "without a target row id" do
         context "with the inferred variable in scope" do
@@ -217,21 +217,6 @@ describe Squealer::Target do
           target.assign(:colA) { ['1', '2'] }
           subject.should == ['1,2']
         end
-
-        it "casts false to 0 (for mysql TINYINT)" do
-          target.assign(:colA) { false }
-          subject.should == [0]
-        end
-
-        it "casts true to 1 (for mysql TINYINT)" do
-          target.assign(:colA) { true }
-          subject.should == [1]
-        end
-
-        it "casts symbol to string" do
-          target.assign(:colA) { :open }
-          subject.should == ['open']
-        end
       end
 
       context "generates SQL command strings" do
@@ -307,8 +292,9 @@ describe Squealer::Target do
 end
 
 def mock_mysql
-  Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(export_dbc)
-  st = mock(Mysql::Stmt)
-  export_dbc.should_receive(:prepare).at_least(:once).and_return(st)
-  st.should_receive(:execute).at_least(:once)
+  my = mock(DataObjects::Connection)
+  comm = mock(DataObjects::Command)
+  Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(my)
+  my.should_receive(:create_command).at_least(:once).and_return(comm)
+  comm.should_receive(:execute_non_query).at_least(:once)
 end

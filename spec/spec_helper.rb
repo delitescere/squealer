@@ -18,11 +18,10 @@ Spec::Runner.configure do |config|
   end
 
   def create_test_db(name)
-    @my = Mysql.connect('localhost', 'root')
-    @my.query("DROP DATABASE IF EXISTS #{name}")
-    @my.query("CREATE DATABASE #{name}")
-    @my.query("USE #{name}")
-    @my.query("SET sql_mode='ANSI_QUOTES'")
+    dbc = DataObjects::Connection.new("mysql://root@localhost/mysql")
+    dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query
+    dbc.create_command("CREATE DATABASE #{name}").execute_non_query
+    dbc.create_command("SET sql_mode='ANSI_QUOTES'").execute_non_query
 
     create_export_tables
 
@@ -33,8 +32,10 @@ Spec::Runner.configure do |config|
   end
 
   def drop_test_db(name)
-    @my.query("DROP DATABASE IF EXISTS #{name}")
-    @my.close
+    @my.close if @my
+    dbc = DataObjects::Connection.new("mysql://root@localhost/mysql")
+    dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query
+    dbc.close
 
     drop_mongo
   end
@@ -78,35 +79,54 @@ Spec::Runner.configure do |config|
 
   def create_export_tables
     command = <<-COMMAND.gsub(/\n\s*/, " ")
-      CREATE TABLE "users" (
-        "id" INT NOT NULL AUTO_INCREMENT ,
+      CREATE TABLE "user" (
+        "id" CHAR(24) NOT NULL ,
+        "organization_id" CHAR(24) NOT NULL ,
         "name" VARCHAR(255) NULL ,
         "gender" CHAR(1) NULL ,
-        "dob" DATE NULL ,
+        "dob" DATETIME NULL ,
+        "awesome" BOOLEAN NULL ,
+        "fat" BOOLEAN NULL ,
+        "symbolic" VARCHAR(255) NULL ,
+        "interests" TEXT NULL ,
         PRIMARY KEY ("id") )
     COMMAND
-    @my.query(command)
+    non_query(command)
 
     command = <<-COMMAND.gsub(/\n\s*/, " ")
       CREATE TABLE "activity" (
-        "id" INT NOT NULL AUTO_INCREMENT ,
-        "user_id" INT NULL ,
+        "id" CHAR(24) NOT NULL ,
+        "user_id" CHAR(24) NULL ,
         "name" VARCHAR(255) NULL ,
-        "due_date" DATE NULL ,
+        "due_date" DATETIME NULL ,
         PRIMARY KEY ("id") )
     COMMAND
-    @my.query(command)
+    non_query(command)
 
     command = <<-COMMAND.gsub(/\n\s*/, " ")
-      CREATE TABLE "organizations" (
-        "id" INT NOT NULL AUTO_INCREMENT ,
-        "disabed_date" DATE NULL ,
+      CREATE TABLE "organization" (
+        "id" CHAR(24) NOT NULL ,
+        "disabled_date" DATETIME NULL ,
         PRIMARY KEY ("id") )
     COMMAND
-    @my.query(command)
+    non_query(command)
+  end
+
+  def truncate_export_tables
+    non_query('DELETE FROM "user"')
+    non_query('TRUNCATE TABLE "activity"')
+    non_query('TRUNCATE TABLE "organization"')
   end
 
   def as_time(date)
     Time.parse(date.to_s)
+  end
+
+  def non_query(text)
+    my.create_command(text).execute_non_query
+  end
+
+  def my
+    @my ||= DataObjects::Connection.new("mysql://root@localhost/#{$db_name}")
   end
 end

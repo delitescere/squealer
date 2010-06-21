@@ -55,13 +55,13 @@ module Squealer
     end
 
     def infer_row_id
-      eval "#{@table_name}._id", @binding, __FILE__, __LINE__
+      (eval "#{@table_name}._id", @binding, __FILE__, __LINE__).to_s
     end
 
     def verify_table_name_in_scope
       table = eval "#{@table_name}", @binding, __FILE__, __LINE__
       raise ArgumentError, "The variable '#{@table_name}' is not a hashmap" unless table.is_a? Hash
-      raise ArgumentError, "The hashmap '#{@table_name}' must have an '_id' key" unless table.has_key? '_id'
+      raise ArgumentError, "The hashmap '#{@table_name}' must have an '_id' key" unless table.has_key?('_id') || table.has_key?(:_id)
     rescue NameError
       raise NameError, "A variable named '#{@table_name}' must be in scope, and reference a hashmap with at least an '_id' key."
     end
@@ -102,10 +102,8 @@ module Squealer
     end
 
     def execute_sql(sql)
-      statement = Database.instance.export.prepare(sql)
       values = typecast_values * 2
-
-      statement.send(:execute, @row_id, *values) #expand values into distinct arguments
+      Database.instance.export.create_command(sql).execute_non_query(infer_row_id, *values)
     rescue Mysql::Error, TypeError
       raise "Failed to execute statement: #{sql} with #{values.inspect}.\nOriginal Exception was: #{$!.to_s}"
     end
@@ -140,14 +138,10 @@ module Squealer
     def typecast_values
       column_values.map do |value|
         case value
-        when true
-          1
-        when false
-          0
-        when Symbol
-          value.to_s
         when Array
           value.join(",")
+        when BSON::ObjectID
+          value.to_s
         else
           value
         end

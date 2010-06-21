@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'mysql'
 require 'mongo'
 
 describe Squealer::Database do
@@ -105,14 +104,25 @@ describe Squealer::Database do
       end
 
       context "real squeal" do
-        before { pending "interactive_view" }
-        subject do
-          source = databases.import.source("users")
-        end
+        # before { pending "interactive_view" }
+        it "exports that stuff to mysql" do
+          databases.export_to('localhost', 'root', '', $db_name)
+          databases.import.source("users").each do |user|
+            target(:user) do |target|
+              target.instance_variable_get('@row_id').should == user['_id'].to_s
+              assign(:organization_id)
+              assign(:name)
 
-        it "^^^ you saw that progress bar right there" do
-          subject.each do
-            sleep (rand(2) + 1)
+              #TODO: What about _id from embedded docs that aren't Mongoid managed?
+              # users.activities.each do |activities|
+                # p activities
+                # target(:activities) do |target|
+                  # assign(:user_id)
+                  # assign(:name)
+                  # assign(:due_date)
+                # end
+              # end
+            end
           end
         end
       end
@@ -126,7 +136,7 @@ describe Squealer::Database do
 
     it "takes an export database" do
       databases.export_to('localhost', 'root', '', $db_name)
-      databases.send(:instance_variable_get, '@export_dbc').should be_a_kind_of(Mysql)
+      databases.instance_variable_get('@export_do').should_not be_nil
     end
   end
 

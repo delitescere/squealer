@@ -112,11 +112,11 @@ describe Object do
   end
 
   def mock_mysql
-    my = mock(Mysql)
-    st = mock(Mysql::Stmt)
+    my = mock(DataObjects::Connection)
+    comm = mock(DataObjects::Command)
     Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(my)
-    my.should_receive(:prepare).at_least(:once).and_return(st)
-    st.should_receive(:execute).at_least(:once)
+    my.should_receive(:create_command).at_least(:once).and_return(comm)
+    comm.should_receive(:execute_non_query).at_least(:once)
   end
 
 end
