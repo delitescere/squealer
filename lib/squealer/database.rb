@@ -2,6 +2,7 @@ require 'mongo'
 require 'data_objects'
 require 'mysql'
 require 'do_mysql'
+require 'do_postgres'
 
 require 'singleton'
 
@@ -14,8 +15,12 @@ module Squealer
       @import_connection = Connection.new(@import_dbc)
     end
 
-    def export_to(host, username, password, name)
-      @export_do = DataObjects::Connection.new("mysql://#{username}:#{password}@#{host}/#{name}")
+    def export_to(adapter, host, username, password, name)
+      @@all_export_connections ||= []
+      @export_do.dispose if @export_do
+
+      @export_do = DataObjects::Connection.new("#{adapter}://#{username}:#{password}@#{host}/#{name}")
+      @@all_export_connections << @export_do
     end
 
     def import
@@ -24,6 +29,10 @@ module Squealer
 
     def export
       @export_do
+    end
+
+    def upsertable?
+      @export_do.is_a? DataObjects::Mysql::Connection
     end
 
     class Connection
@@ -70,6 +79,12 @@ module Squealer
         end
         @progress_bar.finish if @progress_bar
       end
+    end
+
+    private
+
+    def dispose_all_connections
+      @@all_export_connections.each {|c| c.dispose if c} if defined?(@@all_export_connections)
     end
   end
 end

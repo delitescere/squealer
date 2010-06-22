@@ -8,7 +8,7 @@ describe "Exporting" do
   let(:databases) { Squealer::Database.instance }
 
   def prepare_export_database
-    databases.export_to('localhost', 'root', '', $db_name)
+    databases.export_to($db_adapter, 'localhost', $db_user, '', $db_name)
   end
 
   def squeal_basic_users_document(user=users_document)
@@ -41,8 +41,10 @@ describe "Exporting" do
 
   let :first_users_record do
     dbc = databases.instance_variable_get('@export_do')
-    reader = dbc.create_command('SELECT * FROM user').execute_reader
-    reader.each { |x| break x }
+    reader = dbc.create_command(%{SELECT * FROM "user"}).execute_reader
+    result = reader.each { |x| break x }
+    reader.close
+    result
   end
 
   context "a new record" do

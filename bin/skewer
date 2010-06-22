@@ -146,8 +146,8 @@ if write_squeal
     file.write <<-EOS
 require 'squealer'
 
-import('localhost', 27017, 'development') # <--- Change this as needed
-export('localhost', 'root', '', 'export') # <--- Change this as needed
+import('mysql', 'localhost', 27017, 'development') # <--- Change this as needed
+export('mysql', 'localhost', 'root', '', 'export') # <--- Change this as needed
 
 EOS
     file.write(squeal)

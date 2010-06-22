@@ -4,7 +4,7 @@ require 'squealer'
 import('localhost', 27017, 'development')
 
 # connect to the target mysql database
-export('localhost', 'root', '', 'reporting_export')
+export('mysql', 'localhost', 'root', '', 'reporting_export')
 
 # Here we extract, transform and load all documents in a collection...
 

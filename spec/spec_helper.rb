@@ -6,38 +6,31 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'squealer'
+require "spec_helper_dbms_#{ENV['EXPORT_DBMS']||'mysql'}"
 
 Spec::Runner.configure do |config|
   config.before(:suite) do
     $db_name = "test_export_#{object_id}"
-    create_test_db($db_name)
+    create_export_db($db_name)
+    create_import_db($db_name)
   end
 
   config.after(:suite) do
-    drop_test_db($db_name)
+    Squealer::Database.instance.send(:dispose_all_connections)
+    drop_export_test_db($db_name)
+
+    drop_mongo
   end
 
-  def create_test_db(name)
-    dbc = DataObjects::Connection.new("mysql://root@localhost/mysql")
-    dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query
-    dbc.create_command("CREATE DATABASE #{name}").execute_non_query
-    dbc.create_command("SET sql_mode='ANSI_QUOTES'").execute_non_query
+  config.after(:each) do
+    @export_dbc.dispose if @export_dbc
+  end
 
-    create_export_tables
-
-    Squealer::Database.instance.import_from('localhost', 27017, $db_name)
-    @mongo = Squealer::Database.instance.import.send(:instance_variable_get, '@dbc')
+  def create_import_db(name)
+    Squealer::Database.instance.import_from('localhost', 27017, name)
+    @mongo = Squealer::Database.instance.import.instance_variable_get('@dbc')
     drop_mongo
     seed_import
-  end
-
-  def drop_test_db(name)
-    @my.close if @my
-    dbc = DataObjects::Connection.new("mysql://root@localhost/mysql")
-    dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query
-    dbc.close
-
-    drop_mongo
   end
 
   def drop_mongo
@@ -77,43 +70,9 @@ Spec::Runner.configure do |config|
     users.each { |user| @mongo.collection('users').save user }
   end
 
-  def create_export_tables
-    command = <<-COMMAND.gsub(/\n\s*/, " ")
-      CREATE TABLE "user" (
-        "id" CHAR(24) NOT NULL ,
-        "organization_id" CHAR(24) NOT NULL ,
-        "name" VARCHAR(255) NULL ,
-        "gender" CHAR(1) NULL ,
-        "dob" DATETIME NULL ,
-        "awesome" BOOLEAN NULL ,
-        "fat" BOOLEAN NULL ,
-        "symbolic" VARCHAR(255) NULL ,
-        "interests" TEXT NULL ,
-        PRIMARY KEY ("id") )
-    COMMAND
-    non_query(command)
-
-    command = <<-COMMAND.gsub(/\n\s*/, " ")
-      CREATE TABLE "activity" (
-        "id" CHAR(24) NOT NULL ,
-        "user_id" CHAR(24) NULL ,
-        "name" VARCHAR(255) NULL ,
-        "due_date" DATETIME NULL ,
-        PRIMARY KEY ("id") )
-    COMMAND
-    non_query(command)
-
-    command = <<-COMMAND.gsub(/\n\s*/, " ")
-      CREATE TABLE "organization" (
-        "id" CHAR(24) NOT NULL ,
-        "disabled_date" DATETIME NULL ,
-        PRIMARY KEY ("id") )
-    COMMAND
-    non_query(command)
-  end
 
   def truncate_export_tables
-    non_query('DELETE FROM "user"')
+    non_query('TRUNCATE TABLE "user"')
     non_query('TRUNCATE TABLE "activity"')
     non_query('TRUNCATE TABLE "organization"')
   end
@@ -123,10 +82,6 @@ Spec::Runner.configure do |config|
   end
 
   def non_query(text)
-    my.create_command(text).execute_non_query
-  end
-
-  def my
-    @my ||= DataObjects::Connection.new("mysql://root@localhost/#{$db_name}")
+    export_dbc.create_command(text).execute_non_query
   end
 end

@@ -19,8 +19,7 @@ module Squealer
       @binding = block.binding
 
       verify_table_name_in_scope
-
-      @row_id = obtain_row_id(row_id)
+      @row_id = infer_row_id
       @column_names = []
       @column_values = []
       @sql = ''
@@ -55,9 +54,12 @@ module Squealer
     end
 
     def infer_row_id
-      (eval "#{@table_name}._id", @binding, __FILE__, __LINE__).to_s
+      (
+        (eval "#{@table_name}[:_id]", @binding, __FILE__, __LINE__) ||
+        (eval "#{@table_name}['_id']", @binding, __FILE__, __LINE__)
+      ).to_s
     end
-
+3
     def verify_table_name_in_scope
       table = eval "#{@table_name}", @binding, __FILE__, __LINE__
       raise ArgumentError, "The variable '#{@table_name}' is not a hashmap" unless table.is_a? Hash
@@ -84,11 +86,18 @@ module Squealer
 
       yield self
 
-      @sql = "INSERT #{@table_name}"
-      @sql << " (#{pk_name}#{column_names}) VALUES (?#{column_value_markers})"
-      @sql << " ON DUPLICATE KEY UPDATE #{column_markers}"
+      insert_statement = %{INSERT INTO "#{@table_name}"}
+      insert_statement << %{ (#{pk_name}#{column_names}) VALUES ('#{@row_id}'#{column_value_markers})}
+      if Database.instance.upsertable?
+        insert_statement << %{ ON DUPLICATE KEY UPDATE #{column_markers}}
+        @sql = insert_statement
+      else
+        update_statement = %{UPDATE "#{@table_name}" SET #{column_markers} WHERE #{pk_name}='#{@row_id}'}
+        process_sql(update_statement)
+        @sql = update_statement + "; " + insert_statement
+      end
 
-      execute_sql(@sql)
+      process_sql(insert_statement)
 
       Queue.instance.pop
     end
@@ -101,10 +110,16 @@ module Squealer
       @@targets
     end
 
-    def execute_sql(sql)
-      values = typecast_values * 2
-      Database.instance.export.create_command(sql).execute_non_query(infer_row_id, *values)
-    rescue Mysql::Error, TypeError
+    def process_sql(sql)
+      values = Database.instance.upsertable? ? typecast_values * 2 : typecast_values
+      execute_sql(sql, values)
+    end
+
+    def execute_sql(sql, values)
+      Database.instance.export.create_command(sql).execute_non_query(*values)
+    rescue DataObjects::IntegrityError
+      raise "Failed to execute statement: #{sql} with #{values.inspect}.\nOriginal Exception was: #{$!.to_s}" if Database.instance.upsertable?
+    rescue
       raise "Failed to execute statement: #{sql} with #{values.inspect}.\nOriginal Exception was: #{$!.to_s}"
     end
 
@@ -149,7 +164,7 @@ module Squealer
     end
 
     def quote_identifier(name)
-      "`#{name}`"
+      %{"#{name}"}
     end
 
     class Queue < DelegateClass(Array)

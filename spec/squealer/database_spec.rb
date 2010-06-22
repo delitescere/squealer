@@ -105,8 +105,8 @@ describe Squealer::Database do
 
       context "real squeal" do
         # before { pending "interactive_view" }
-        it "exports that stuff to mysql" do
-          databases.export_to('localhost', 'root', '', $db_name)
+        it "exports that stuff to SQL" do
+          databases.export_to($db_adapter, 'localhost', $db_user, '', $db_name)
           databases.import.source("users").each do |user|
             target(:user) do |target|
               target.instance_variable_get('@row_id').should == user['_id'].to_s
@@ -135,8 +135,28 @@ describe Squealer::Database do
     let(:databases) { Squealer::Database.instance }
 
     it "takes an export database" do
-      databases.export_to('localhost', 'root', '', $db_name)
+      databases.export_to($db_adapter, 'localhost', $db_user, '', $db_name)
       databases.instance_variable_get('@export_do').should_not be_nil
+    end
+  end
+
+  describe "upsertable?" do
+    subject { Squealer::Database.instance }
+
+    context "mysql connection" do
+      before do
+        subject.export_to('mysql', 'localhost', 'root', '', 'mysql')
+      end
+
+      it { should be_upsertable }
+    end
+
+    context "postgres connection" do
+      before do
+        subject.export_to('postgres', 'localhost', '', '', 'postgres')
+      end
+
+      it { should_not be_upsertable }
     end
   end
 
