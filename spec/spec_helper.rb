@@ -45,24 +45,24 @@ Spec::Runner.configure do |config|
       { :name => 'Josh Graham', :dob => as_time(Date.parse('01-Jan-1971')), :gender => 'M',
         :organization_id => hashrocket,
         :activities => [
-          { :name => 'Develop squealer', :due_date => as_time(Date.today + 1) },
-          { :name => 'Organize speakerconf.com', :due_date => as_time(Date.today + 30) },
-          { :name => 'Hashrocket party', :due_date => as_time(Date.today + 7) }
+          { :_id => id, :name => 'Develop squealer', :due_date => as_time(Date.today + 1) },
+          { :_id => id, :name => 'Organize speakerconf.com', :due_date => as_time(Date.today + 30) },
+          { :_id => id, :name => 'Hashrocket party', :due_date => as_time(Date.today + 7) }
         ]
       },
       { :name => 'Bernerd Schaefer', :dob => as_time(Date.parse('31-Dec-1985')), :gender => 'M',
         :organization_id => hashrocket,
         :activities => [
-          { :name => 'Retype all of the code Josh wrote in squealer', :due_date => as_time(Date.today + 2) },
-          { :name => 'Listen to rare Thelonius Monk EP', :due_date => as_time(Date.today) },
-          { :name => 'Practice karaoke', :due_date => as_time(Date.today + 7) }
+          { :_id => id, :name => 'Retype all of the code Josh wrote in squealer', :due_date => as_time(Date.today + 2) },
+          { :_id => id, :name => 'Listen to rare Thelonius Monk EP', :due_date => as_time(Date.today) },
+          { :_id => id, :name => 'Practice karaoke', :due_date => as_time(Date.today + 7) }
         ]
       },
       { :name => 'Your momma', :dob => as_time(Date.parse('15-Jun-1955')), :gender => 'F',
         :organization_id => zorganization,
         :activities => [
-          { :name => 'Cook me some pie', :due_date => as_time(Date.today) },
-          { :name => 'Make me a sammich', :due_date => as_time(Date.today) }
+          { :_id => id, :name => 'Cook me some pie', :due_date => as_time(Date.today) },
+          { :_id => id, :name => 'Make me a sammich', :due_date => as_time(Date.today) }
         ]
       }
     ]
@@ -83,5 +83,10 @@ Spec::Runner.configure do |config|
 
   def non_query(text)
     export_dbc.create_command(text).execute_non_query
+  end
+
+  def id
+    require 'sha1'
+    (Digest::SHA1.hexdigest rand.to_s)[0,24]
   end
 end

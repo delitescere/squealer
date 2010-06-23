@@ -113,15 +113,15 @@ describe Squealer::Database do
               assign(:organization_id)
               assign(:name)
 
-              #TODO: What about _id from embedded docs that aren't Mongoid managed?
-              # users.activities.each do |activities|
-                # p activities
-                # target(:activities) do |target|
-                  # assign(:user_id)
-                  # assign(:name)
-                  # assign(:due_date)
-                # end
-              # end
+              #TODO: Update README to highlight that all embedded docs should have an _id
+              # as all Ruby mappers for MongoDB make one. (according to Durran)
+              user.activities.each do |activity|
+                target(:activity) do |target|
+                  assign(:user_id)
+                  assign(:name)
+                  assign(:due_date)
+                end
+              end
             end
           end
         end

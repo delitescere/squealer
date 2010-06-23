@@ -23,8 +23,8 @@ def create_export_tables
         "name" VARCHAR(255) NULL ,
         "gender" CHAR(1) NULL ,
         "dob" DATETIME NULL ,
-        "awesome" BOOLEAN NULL ,
-        "fat" BOOLEAN NULL ,
+        "foreign" BOOLEAN NULL ,
+        "dull" BOOLEAN NULL ,
         "symbolic" VARCHAR(255) NULL ,
         "interests" TEXT NULL ,
         PRIMARY KEY ("id") )

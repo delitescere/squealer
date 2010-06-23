@@ -3,6 +3,7 @@ require 'squealer'
 # connect to the source mongodb database
 import('localhost', 27017, 'development')
 
+
 # connect to the target mysql database
 export('mysql', 'localhost', 'root', '', 'reporting_export')
 
@@ -17,6 +18,12 @@ export('mysql', 'localhost', 'root', '', 'reporting_export')
 #
 # Defaults to find all...
 import.source('users').each do |user|
+
+  # TODO: Allow specification of import row_id (export still uses "id" column as primary key):
+  # import_row_id { user['_id'] }
+  # import_row_id :_id
+  # import_row_id :name, :dob # Digest::SHA1.hexdigest(concatenated keys)[0,24]
+
   # Insert or Update on table 'user' where 'id' is the column name of the primary key.
   #
   # The primary key value is taken from the '_id' field of the source document,
