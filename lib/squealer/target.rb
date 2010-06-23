@@ -2,7 +2,6 @@ require 'delegate'
 require 'singleton'
 
 #TODO: Use logger and log throughout
-#TODO: Counters and timers
 
 module Squealer
   class Target
@@ -11,10 +10,11 @@ module Squealer
       Queue.instance.current
     end
 
-    def initialize(database_connection, table_name, row_id=nil, &block)
+    def initialize(database_connection, table_name, &block)
       raise BlockRequired, "Block must be given to target (otherwise, there's no work to do)" unless block_given?
       raise ArgumentError, "Table name must be supplied" if table_name.to_s.strip.empty?
 
+      @dbc = database_connection
       @table_name = table_name.to_s
       @binding = block.binding
 
@@ -42,16 +42,6 @@ module Squealer
 
 
     private
-
-    def obtain_row_id(row_id)
-      #TODO: Remove in version 1.3 - just call infer_row_id in initialize
-      if row_id != nil
-        puts "\033[33mWARNING - squealer:\033[0m the 'target' row_id parameter is deprecated and will be invalid in version 1.3 and above. Remove it, and ensure the table_name matches a variable containing a hashmap with an _id key"
-        row_id
-      else
-        infer_row_id
-      end
-    end
 
     def infer_row_id
       (
@@ -116,7 +106,7 @@ module Squealer
     end
 
     def execute_sql(sql, values)
-      Database.instance.export.create_command(sql).execute_non_query(*values)
+      @dbc.create_command(sql).execute_non_query(*values)
     rescue DataObjects::IntegrityError
       raise "Failed to execute statement: #{sql} with #{values.inspect}.\nOriginal Exception was: #{$!.to_s}" if Database.instance.upsertable?
     rescue
