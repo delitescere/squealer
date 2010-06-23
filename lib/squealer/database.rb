@@ -1,8 +1,5 @@
 require 'mongo'
 require 'data_objects'
-require 'mysql'
-require 'do_mysql'
-require 'do_postgres'
 
 require 'singleton'
 
@@ -16,6 +13,8 @@ module Squealer
     end
 
     def export_to(adapter, host, username, password, name)
+      require "do_#{adapter}"
+
       @@all_export_connections ||= []
       @export_do.dispose if @export_do
 
@@ -32,7 +31,7 @@ module Squealer
     end
 
     def upsertable?
-      @export_do.is_a? DataObjects::Mysql::Connection
+      defined?(DataObjects::Mysql) && @export_do.is_a?(DataObjects::Mysql::Connection)
     end
 
     class Connection

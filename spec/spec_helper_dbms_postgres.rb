@@ -1,4 +1,5 @@
 def create_export_db(name)
+  require 'do_postgres'
   $db_adapter = 'postgres'
   dbc = DataObjects::Connection.new("postgres://localhost/postgres")
   dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query

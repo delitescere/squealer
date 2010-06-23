@@ -1,4 +1,5 @@
 def create_export_db(name)
+  require 'do_mysql'
   $db_adapter = 'mysql'
   dbc = DataObjects::Connection.new("mysql://root@localhost/mysql")
   dbc.create_command("DROP DATABASE IF EXISTS #{name}").execute_non_query
