@@ -22,9 +22,9 @@ where the squeal script includes a `require 'squealer'`.
 ### v2.2
 * Adds support for PostgreSQL database as an export target
 * Uses EXPORT_DBMS environment variable to specify database adapter
-** EXPORT_DMBS=mysql
-** EXPORT_DBMS=postgres
-** MySQL is default if not specified
+ * EXPORT_DMBS=mysql
+ * EXPORT_DBMS=postgres
+ * MySQL is default if not specified
 * Switched to using DataMapper's DataObjects SQL wrapper
 * Removed the need for some typecasting and export schema restrictions (e.g. true/false maps to whatever is idiomatic for the specified DBMS)
 * NB: The pg gem for PostgreSQL segfaults on Ruby 1.8.7-p249 so we've reverted to supporting up to 1.8.7-p174
