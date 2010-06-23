@@ -5,27 +5,28 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "2.1.1"
+  s.version = "2.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
-  s.date = %q{2010-05-20}
+  s.date = %q{2010-06-23}
   s.default_executable = %q{skewer}
   s.description = %q{Exports mongodb to mysql. More later.}
   s.email = %q{joshua.graham@grahamis.com}
   s.executables = ["skewer"]
   s.extra_rdoc_files = [
-    "README.md"
+    "LICENSE",
+     "README.md"
   ]
   s.files = [
     ".gitignore",
      ".rvmrc",
      ".watchr",
+     "LICENSE",
      "README.md",
      "Rakefile",
      "VERSION",
      "bin/skewer",
-     "lib/.example_squeal.rb.swp",
      "lib/example_squeal.rb",
      "lib/squealer.rb",
      "lib/squealer/database.rb",
@@ -33,16 +34,17 @@ Gem::Specification.new do |s|
      "lib/squealer/object.rb",
      "lib/squealer/progress_bar.rb",
      "lib/squealer/target.rb",
-     "lib/squealer/time.rb",
      "lib/tasks/jeweler.rake",
+     "spec/integration/export_a_record_spec.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb",
+     "spec/spec_helper_dbms_mysql.rb",
+     "spec/spec_helper_dbms_postgres.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
      "spec/squealer/progress_bar_spec.rb",
      "spec/squealer/target_spec.rb",
-     "spec/squealer/time_spec.rb",
      "squealer.gemspec"
   ]
   s.homepage = %q{http://github.com/delitescere/squealer/}
@@ -51,13 +53,15 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Document-oriented to Relational database exporter}
   s.test_files = [
-    "spec/spec_helper.rb",
+    "spec/integration/export_a_record_spec.rb",
+     "spec/spec_helper.rb",
+     "spec/spec_helper_dbms_mysql.rb",
+     "spec/spec_helper_dbms_postgres.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
      "spec/squealer/progress_bar_spec.rb",
-     "spec/squealer/target_spec.rb",
-     "spec/squealer/time_spec.rb"
+     "spec/squealer/target_spec.rb"
   ]
 
   if s.respond_to? :specification_version then
@@ -65,18 +69,33 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<mysql>, [">= 2.8.1"])
       s.add_runtime_dependency(%q<mongo>, [">= 0.18.3"])
       s.add_runtime_dependency(%q<bson_ext>, [">= 1.0.1"])
+      s.add_runtime_dependency(%q<data_objects>, [">= 0.10.2"])
+      s.add_runtime_dependency(%q<mysql>, [">= 2.8.1"])
+      s.add_runtime_dependency(%q<do_mysql>, [">= 0.10.2"])
+      s.add_runtime_dependency(%q<pg>, [">= 0.9.0"])
+      s.add_runtime_dependency(%q<do_postgres>, [">= 0.10.2"])
+      s.add_development_dependency(%q<rspec>, [">= 1.3.0"])
     else
-      s.add_dependency(%q<mysql>, [">= 2.8.1"])
       s.add_dependency(%q<mongo>, [">= 0.18.3"])
       s.add_dependency(%q<bson_ext>, [">= 1.0.1"])
+      s.add_dependency(%q<data_objects>, [">= 0.10.2"])
+      s.add_dependency(%q<mysql>, [">= 2.8.1"])
+      s.add_dependency(%q<do_mysql>, [">= 0.10.2"])
+      s.add_dependency(%q<pg>, [">= 0.9.0"])
+      s.add_dependency(%q<do_postgres>, [">= 0.10.2"])
+      s.add_dependency(%q<rspec>, [">= 1.3.0"])
     end
   else
-    s.add_dependency(%q<mysql>, [">= 2.8.1"])
     s.add_dependency(%q<mongo>, [">= 0.18.3"])
     s.add_dependency(%q<bson_ext>, [">= 1.0.1"])
+    s.add_dependency(%q<data_objects>, [">= 0.10.2"])
+    s.add_dependency(%q<mysql>, [">= 2.8.1"])
+    s.add_dependency(%q<do_mysql>, [">= 0.10.2"])
+    s.add_dependency(%q<pg>, [">= 0.9.0"])
+    s.add_dependency(%q<do_postgres>, [">= 0.10.2"])
+    s.add_dependency(%q<rspec>, [">= 1.3.0"])
   end
 end
 
