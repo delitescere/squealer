@@ -4,7 +4,6 @@ describe Squealer::Target do
   let(:table_name) { :test_table }
   let(:test_table) { {'_id' => 0} }
 
-  let(:export_dbc) { nil } #TODO: get rid of this argument from the API
   let(:upsertable?) { Squealer::Database.instance.upsertable? }
 
   after(:each) { Squealer::Target::Queue.instance.clear }
@@ -66,10 +65,10 @@ describe Squealer::Target do
     it "pushes itself onto the targets stack when starting" do
       @target1 = @target2 = nil
 
-      target1 = Squealer::TestTarget.new(export_dbc, table_name) do
+      target1 = Squealer::TestTarget.new(nil, table_name) do
         @target1 = Squealer::Target.current
         test_table_2 = test_table
-        Squealer::TestTarget.new(export_dbc, "#{table_name}_2") do
+        Squealer::TestTarget.new(nil, "#{table_name}_2") do
           @target2 = Squealer::Target.current
           @target2.should_not == @target1
         end
@@ -78,7 +77,7 @@ describe Squealer::Target do
     end
 
     it "pops itself off the targets stack when finished" do
-      Squealer::TestTarget.new(export_dbc, table_name) { nil }
+      Squealer::TestTarget.new(nil, table_name) { nil }
       Squealer::Target.current.should be_nil
     end
   end
@@ -87,16 +86,16 @@ describe Squealer::Target do
   context "yielding" do
     it "yields" do
       block_done = false
-      target = Squealer::TestTarget.new(export_dbc, table_name) { block_done = true }
+      target = Squealer::TestTarget.new(nil, table_name) { block_done = true }
       block_done.should be_true
     end
 
     it "yields inner blocks before executing its own SQL" do
       blocks_done = []
-      Squealer::TestTarget.new(export_dbc, table_name) do |target_1|
+      Squealer::TestTarget.new(nil, table_name) do |target_1|
         blocks_done << target_1
         blocks_done.first.sql.should be_empty
-        Squealer::TestTarget.new(export_dbc, table_name) do |target_2|
+        Squealer::TestTarget.new(nil, table_name) do |target_2|
           blocks_done << target_2
           blocks_done.first.sql.should be_empty
           blocks_done.last.sql.should be_empty
@@ -180,13 +179,13 @@ describe Squealer::Target do
 
   context "exporting" do
     it "sends the sql to the export database" do
-      Squealer::TestTarget.new(export_dbc, table_name) { nil }
+      Squealer::TestTarget.new(nil, table_name) { nil }
     end
 
     describe "#target" do
       describe "#typecast_values" do
         subject { target.send(:typecast_values) }
-        let(:target) { Squealer::TestTarget.new(export_dbc, table_name) {} }
+        let(:target) { Squealer::TestTarget.new(nil, table_name) {} }
 
         it "casts array to comma-separated string" do
           target.assign(:colA) { ['1', '2'] }
@@ -195,7 +194,7 @@ describe Squealer::Target do
       end
 
       context "generates SQL command strings" do
-        let(:target) { Squealer::TestTarget.new(export_dbc, table_name) { nil } }
+        let(:target) { Squealer::TestTarget.new(nil, table_name) { nil } }
 
         context "insert" do
           it "targets the table" do
@@ -223,7 +222,7 @@ describe Squealer::Target do
       context "with 2 columns" do
         let(:value_1) { 42 }
         let(:target) do
-          Squealer::TestTarget.new(export_dbc, table_name) { Squealer::Target.current.assign(:colA) { value_1 } }
+          Squealer::TestTarget.new(nil, table_name) { Squealer::Target.current.assign(:colA) { value_1 } }
         end
 
         context "insert" do
@@ -248,7 +247,7 @@ describe Squealer::Target do
         let(:value_1) { 42 }
         let(:value_2) { 'foobar' }
         let(:target) do
-          Squealer::TestTarget.new(export_dbc, table_name) do |target|
+          Squealer::TestTarget.new(nil, table_name) do |target|
             Squealer::Target.current.assign(:colA) { value_1 }
             Squealer::Target.current.assign(:colB) { value_2 }
           end
