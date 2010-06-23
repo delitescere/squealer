@@ -86,7 +86,7 @@ Spec::Runner.configure do |config|
   end
 
   def id
-    require 'sha1'
+    require 'digest/sha1'
     (Digest::SHA1.hexdigest rand.to_s)[0,24]
   end
 end

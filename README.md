@@ -63,6 +63,8 @@ Squealer doesn't use your application classes. It doesn't use your ActiveRecord 
 For now, this is specifically for importing _MongoDB_ documents and exporting to either _MySQL_ or _PostgreSQL_.
 
 ## Notes
+Tested on Ruby 1.8.7(-p174) and Ruby 1.9.1(-p378)
+
 The target SQL database _must_ have no foreign keys (because it can't rely on the primary key values and referential integrity is the responsibility of the source data store or the application that uses it).
 
 The target SQL database must use a primary key of `CHAR(24)`. For now, we've assumed that column name is `id`. Each record's `id` value will get the source document `_id` value. There are some plans to make this more flexible. If you are actively requiring this, let Josh know.
