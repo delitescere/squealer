@@ -9,8 +9,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
     gemspec.name = "squealer"
-    gemspec.summary = "Document-oriented to Relational database exporter"
-    gemspec.description = "Exports mongodb to mysql. More later."
+    gemspec.summary = "Document-oriented database to RDBMS exports"
+    gemspec.description = "Exports MongoDB to MySQL or PostgreSQL."
     gemspec.email = "joshua.graham@grahamis.com"
     gemspec.homepage = "http://github.com/delitescere/squealer/"
     gemspec.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]

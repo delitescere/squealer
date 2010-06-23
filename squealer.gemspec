@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
   s.date = %q{2010-06-23}
   s.default_executable = %q{skewer}
-  s.description = %q{Exports mongodb to mysql. More later.}
+  s.description = %q{Exports MongoDB to MySQL or PostgreSQL.}
   s.email = %q{joshua.graham@grahamis.com}
   s.executables = ["skewer"]
   s.extra_rdoc_files = [
@@ -51,7 +51,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
-  s.summary = %q{Document-oriented to Relational database exporter}
+  s.summary = %q{Document-oriented database to RDBMS exports}
   s.test_files = [
     "spec/integration/export_a_record_spec.rb",
      "spec/spec_helper.rb",
