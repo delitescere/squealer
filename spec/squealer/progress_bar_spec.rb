@@ -1,10 +1,12 @@
 require 'spec_helper'
 
 describe Squealer::ProgressBar do
+  let(:clock) { Time.new }
   let(:total) { 200 }
   let(:progress_bar) do
     testable_progress_bar = Class.new(Squealer::ProgressBar) do
       attr_reader :emitter
+      attr_accessor :clock
       public :total, :ticks, :percentage, :progress_markers, :emit,
              :duration, :start_time, :end_time, :progress_bar_width
 
@@ -17,7 +19,9 @@ describe Squealer::ProgressBar do
       public :real_start_emitter
 
     end
-    testable_progress_bar.new(total).start
+    bar = testable_progress_bar.new(total)
+    bar.clock = clock
+    bar.start
   end
   let(:console) { progress_bar.console }
   let(:progress_bar_width) { progress_bar.progress_bar_width }
@@ -69,7 +73,66 @@ describe Squealer::ProgressBar do
 
     it "prints a progress bar to the console" do
       progress_bar.emit
-      console.string.should == "\r[#{' ' * progress_bar_width}]   #{0}/#{total} (0%)"
+      console.string.should == "\r[#{' ' * progress_bar_width}]   #{0}/#{total} (0%) [0/s]"
+    end
+
+    context "0 ticks per second" do
+      it "shows 0 documents per second" do
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.emit
+        console.string.should =~ %r{ \[0/s\]$}
+
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.emit
+        console.string.should =~ %r{ \[0/s\]$}
+      end
+    end
+
+    context "1 ticks per second" do
+      it "shows 1 document per second" do
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.emit
+        console.string.should =~ %r{ \[1/s\]$}
+
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.emit
+        console.string.should =~ %r{ \[1/s\]$}
+      end
+    end
+
+    context "2 ticks per second" do
+      it "shows 2 documents per second" do
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.tick
+        progress_bar.emit
+        console.string.should =~ %r{ \[2/s\]$}
+
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.tick
+        progress_bar.emit
+        console.string.should =~ %r{ \[2/s\]$}
+      end
+    end
+
+    context "averaging 2 ticks per second" do
+      it "shows 2 documents per second" do
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.emit
+
+        progress_bar.clock = progress_bar.clock + 60
+        progress_bar.tick
+        progress_bar.emit
+
+        progress_bar.clock = progress_bar.clock + 60
+        4.times { progress_bar.tick }
+        progress_bar.emit
+        console.string.should =~ %r{ \[2/s\]$}
+      end
     end
   end
 
@@ -101,8 +164,8 @@ describe Squealer::ProgressBar do
 
     it "prints a progress bar to the console" do
       progress_bar.emit
-      percentag = (ticks.to_f * 100 / total).floor
-      console.string.should == "\r[=#{' ' * (progress_bar_width - 1)}]   #{ticks}/#{total} (#{percentag}%)"
+      percentage = (ticks.to_f * 100 / total).floor
+      console.string.should == "\r[=#{' ' * (progress_bar_width - 1)}]   #{ticks}/#{total} (#{percentage}%) [0/s]"
     end
   end
 
@@ -147,7 +210,7 @@ describe Squealer::ProgressBar do
     it "prints a progress bar to the console" do
       progress_bar.finish
       progress_bar.emit
-      console.string.split("\n").first.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%)"
+      console.string.split("\n").first.should == "\r[#{'=' * progress_bar_width}] #{ticks}/#{total} (100%) [0/s]"
     end
   end
 

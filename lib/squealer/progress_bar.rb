@@ -17,17 +17,16 @@ module Squealer
 
       @progress_bar_width = 50
       @count_width = total.to_s.size
-
     end
 
     def start
-      @start_time = Time.new
+      @start_time = clock
       @emitter = start_emitter if total > 0
       self
     end
 
     def finish
-      @end_time = Time.new
+      @end_time = clock
       @emitter.wakeup.join if @emitter
       @@progress_bar = nil
     end
@@ -46,8 +45,8 @@ module Squealer
     end
 
     def emit
-      format = "\r[%-#{progress_bar_width}s] %#{count_width}i/%i (%i%%)"
-      console.print format % [progress_markers, ticks, total, percentage]
+      format = "\r[%-#{progress_bar_width}s] %#{count_width}i/%i (%i%%) [%i/s]"
+      console.print format % [progress_markers, ticks, total, percentage, tps]
       emit_final if done?
     end
 
@@ -57,6 +56,10 @@ module Squealer
       console.puts "Start: #{start_time}"
       console.puts "End: #{end_time}"
       console.puts "Duration: #{duration}"
+    end
+
+    def clock
+      Time.now
     end
 
     def done?
@@ -73,6 +76,13 @@ module Squealer
 
     def ticks
       @ticks
+    end
+
+    def tps
+      elapsed_secs = (clock - start_time) / 60
+      (ticks / elapsed_secs).ceil
+    rescue
+      0
     end
 
     def total
