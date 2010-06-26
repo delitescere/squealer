@@ -49,7 +49,7 @@ module Squealer
         (eval "#{@table_name}['_id']", @binding, __FILE__, __LINE__)
       ).to_s
     end
-3
+
     def verify_table_name_in_scope
       table = eval "#{@table_name}", @binding, __FILE__, __LINE__
       raise ArgumentError, "The variable '#{@table_name}' is not a hashmap" unless table.is_a? Hash
