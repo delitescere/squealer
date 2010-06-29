@@ -1,7 +1,7 @@
-require 'mongo'
-require 'data_objects'
-
 require 'singleton'
+
+require 'mongo'
+# data_objects required under export_to dependant on adapter requested in EXPORT_DBMS
 
 module Squealer
   class Database
@@ -15,11 +15,14 @@ module Squealer
     def export_to(adapter, host, username, password, name)
       require "do_#{adapter}"
 
-      @@all_export_connections ||= []
-      @export_do.dispose if @export_do
-
-      @export_do = DataObjects::Connection.new("#{adapter}://#{username}:#{password}@#{host}/#{name}")
-      @@all_export_connections << @export_do
+      @export_do.release if @export_do
+      creds = ""
+      creds << username if username
+      creds << ":#{password}" if password
+      at_host = ""
+      at_host << "#{creds}@" unless creds.empty?
+      at_host << host
+      @export_do = DataObjects::Connection.new("#{adapter}://#{at_host}/#{name}")
     end
 
     def import
@@ -51,7 +54,7 @@ module Squealer
       def eval(string)
         @dbc.eval(string)
       end
-    end
+    end # Connection
 
     class Source
       attr_reader :counts, :cursor
@@ -78,12 +81,7 @@ module Squealer
         end
         @progress_bar.finish if @progress_bar
       end
-    end
+    end # Source
 
-    private
-
-    def dispose_all_connections
-      @@all_export_connections.each {|c| c.dispose if c} if defined?(@@all_export_connections)
-    end
   end
 end

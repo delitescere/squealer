@@ -281,3 +281,8 @@ module Squealer
     end
   end
 end
+
+module BSON
+  class ObjectID; end
+end
+

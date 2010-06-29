@@ -1,16 +1,8 @@
-require 'spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/./spec_helper_dbms')
 
 describe "Exporting" do
-  before do
-    truncate_export_tables
-  end
-
   let(:databases) { Squealer::Database.instance }
   let(:today) { Date.today }
-
-  def prepare_export_database
-    databases.export_to($db_adapter, 'localhost', $db_user, '', $db_name)
-  end
 
   def squeal_basic_users_document(user=users_document)
     target(:user) do
@@ -61,7 +53,7 @@ describe "Exporting" do
   end
 
   let :first_users_record do
-    dbc = databases.instance_variable_get('@export_do')
+    dbc = databases.export
     reader = dbc.create_command(%{SELECT * FROM "user"}).execute_reader
     result = reader.each { |x| break x }
     reader.close
@@ -69,7 +61,7 @@ describe "Exporting" do
   end
 
   let :first_activity_record do
-    dbc = databases.instance_variable_get('@export_do')
+    dbc = databases.export
     reader = dbc.create_command(%{SELECT * FROM "activity"}).execute_reader
     result = reader.each { |x| break x }
     reader.close
@@ -78,7 +70,6 @@ describe "Exporting" do
 
   context "a new record" do
     it "saves the data correctly" do
-      prepare_export_database
       squeal_basic_users_document
       result = first_users_record
 
@@ -99,7 +90,6 @@ describe "Exporting" do
     end
 
     it "saves embedded documents correctly" do
-      prepare_export_database
       squeal_users_document_with_activities
       result = first_activity_record
 
@@ -112,7 +102,6 @@ describe "Exporting" do
 
   context "an existing record" do
     it "updates the data correctly" do
-      prepare_export_database
       squeal_basic_users_document
       squeal_basic_users_document(users_document.merge('foreign' => false, 'gender' => 'F'))
 
@@ -135,7 +124,6 @@ describe "Exporting" do
     end
 
     it "updates the child record correctly" do
-      prepare_export_database
       squeal_users_document_with_activities(users_document.merge('activities' => [{ :_id => 'a1', 'name' => 'Be expansionist', 'due_date' => as_time(today + 1) }]))
       result = first_activity_record
 

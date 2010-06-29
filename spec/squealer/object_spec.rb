@@ -30,11 +30,6 @@ describe Object do
       target(:test_table) { nil }
     end
 
-    it "uses the export database connection" do
-      mock_mysql
-      target(:test_table) { nil }
-    end
-
   end
 
   describe "#assign" do
@@ -112,6 +107,8 @@ describe Object do
   end
 
   def mock_mysql
+    require 'data_objects'
+
     my = mock(DataObjects::Connection)
     comm = mock(DataObjects::Command)
     Squealer::Database.instance.should_receive(:export).at_least(:once).and_return(my)
