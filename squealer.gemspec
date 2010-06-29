@@ -5,13 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{squealer}
-  s.version = "2.2.1"
+  s.version = "2.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
-  s.date = %q{2010-06-23}
+  s.date = %q{2010-06-29}
   s.default_executable = %q{skewer}
-  s.description = %q{Exports MongoDB to MySQL or PostgreSQL.}
+  s.description = %q{A Ruby DSL for exporting MongoDB to MySQL or PostgreSQL. You don't need to install both, just one. Use EXPORT_DBMS=[mysql|postgres] environment variable to specify the appropriate adapter.}
   s.email = %q{joshua.graham@grahamis.com}
   s.executables = ["skewer"]
   s.extra_rdoc_files = [
@@ -36,10 +36,12 @@ Gem::Specification.new do |s|
      "lib/squealer/target.rb",
      "lib/tasks/jeweler.rake",
      "spec/integration/export_a_record_spec.rb",
+     "spec/integration/imports_from_mongodb.rb",
+     "spec/integration/spec_helper_dbms.rb",
+     "spec/integration/spec_helper_dbms_mysql.rb",
+     "spec/integration/spec_helper_dbms_postgres.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb",
-     "spec/spec_helper_dbms_mysql.rb",
-     "spec/spec_helper_dbms_postgres.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
@@ -51,12 +53,14 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Document-oriented database to RDBMS exports}
+  s.summary = %q{Export document-oriented database to RDBMS}
   s.test_files = [
     "spec/integration/export_a_record_spec.rb",
+     "spec/integration/imports_from_mongodb.rb",
+     "spec/integration/spec_helper_dbms.rb",
+     "spec/integration/spec_helper_dbms_mysql.rb",
+     "spec/integration/spec_helper_dbms_postgres.rb",
      "spec/spec_helper.rb",
-     "spec/spec_helper_dbms_mysql.rb",
-     "spec/spec_helper_dbms_postgres.rb",
      "spec/squealer/database_spec.rb",
      "spec/squealer/hash_spec.rb",
      "spec/squealer/object_spec.rb",
