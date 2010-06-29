@@ -10,8 +10,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
     gemspec.name = "squealer"
-    gemspec.summary = "Document-oriented database to RDBMS exports"
-    gemspec.description = "Exports MongoDB to MySQL or PostgreSQL."
+    gemspec.summary = "Export document-oriented database to RDBMS"
+    gemspec.description = "A Ruby DSL for exporting MongoDB to MySQL or PostgreSQL. You don't need to install both, just one. Use EXPORT_DBMS=[mysql|postgres] environment variable to specify the appropriate adapter."
     gemspec.email = "joshua.graham@grahamis.com"
     gemspec.homepage = "http://github.com/delitescere/squealer/"
     gemspec.authors = ["Josh Graham", "Durran Jordan", "Matt Yoho", "Bernerd Schaefer"]
