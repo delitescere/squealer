@@ -17,14 +17,12 @@ where the squeal script includes a `require 'squealer'`.
 * At the inaugural QCon San Francisco in a discussion with Martin Fowler and Ola Bini, Josh postulated that ORMs had it the wrong way around: that the application should be persisting its data in a manner natural to it, and that external systems (like reporting and decision support systems - or even numbskull integration at the persistence layer) should bear the cost of mapping. With the huge efforts put into noSQL engines like MongoDB, neo4j, Redis, Hadoop, CouchDB, Memcached, et cetera, has come a rise in popularity. With this increased and broader usage comes people who are looking for tools to make these data stores more accessible. The application is no longer bearing the cost of mapping - it's now time for the ancillary and external systems to pick up the bill!
 * squealer provides a simple, declarative language for mapping values from trees into relations. It is inherently flexibile by being an internal Ruby DSL, so any imperative traversal or mapping logic can be expressed
 * It can be used both in bulk operations on many documents (e.g. a periodic batch job) or executed for one document asynchronously as part of an after_save method (e.g. via a Resque job). It is possible that more work may done on this event-driven approach, perhaps in the form of a squealerd, to reduce latency.
+* For more on rationale, see my [blog post](http://grahamis.com/blog/2010/06/10/squealer-intro/ "Why squealer") and another from [Debasish Ghosh](http://debasishg.blogspot.com/2010/06/phase-shift-for-orm.html "A Phase Shift for the ORM")
 
 ## Release Notes
 ### v2.2
 * Adds support for PostgreSQL database as an export target
-* Uses EXPORT_DBMS environment variable to specify database adapter
- * EXPORT_DMBS=mysql
- * EXPORT_DBMS=postgres
- * MySQL is default if not specified
+* Uses EXPORT_DBMS environment variable to specify database adapter. `EXPORT_DMBS=mysql` or `EXPORT_DBMS=postgres`. MySQL is default if not specified
 * Switched to using DataMapper's DataObjects SQL wrapper
 * Removed the need for some typecasting and export schema restrictions (e.g. true/false maps to whatever is idiomatic for the specified DBMS)
 * NB: The pg gem for PostgreSQL segfaults on Ruby 1.8.7-p249 so we've reverted to supporting up to 1.8.7-p174
