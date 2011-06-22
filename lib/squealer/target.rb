@@ -145,7 +145,7 @@ module Squealer
         case value
         when Array
           value.join(",")
-        when BSON::ObjectID
+        when BSON::ObjectId
           value.to_s
         else
           value
